@@ -11,7 +11,6 @@ library(readxl)
 #work on bivariate descriptives
 #talk to val about survival with multiple obs per person (mixed interrupted survival analysis)
 
-
 #supplement to the re-entry form scores
 #applies only to people who have been incarcerated for less than 4 years
 ScoresSRTData <- read_excel("ScoresSRTData.xlsx")
@@ -122,6 +121,9 @@ duplicate <- duplicates_list[[1]]
 duplicate_data <- ClientScoresAll %>% 
   filter(StudyClientId %in% duplicate)
 
+#saving duplicate data 
+save(duplicate_data, file ="duplicates.Rdata")
+
 length(unique(duplicate_data$StudyClientId))
 #there are 380 clients that have answered the forms more than once
 
@@ -147,5 +149,57 @@ RiskClientScores <- EpisodeClientScores %>%
 RiskClientScores <- RiskClientScores %>% 
   mutate(Success = ifelse(DischargeStatus=="Successful", 1, 0))
 
+#data management for race variable
+RiskClientScores <- RiskClientScores %>% 
+  mutate(Race = ifelse(Race == "Some other race",
+                       "Other", Race),
+         Race = ifelse(Race == "Undisclosed"|Race == "Not on file", NA, Race), 
+         Race = ifelse(Race == "American Indian or Alaskan Native"| Race == "Native Hawaiian/Other Pacific Islander",
+                       "Native", Race))
+
+#data management for ethnicity variable 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(Ethnicity = ifelse(Ethnicity == "Unknown", NA, Ethnicity))
+
+#creating hispanic/latino variable 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(Hispanic = ifelse(Ethnicity == "No, Not of Hispanic, Latino, or Spanish Origin.", 0, 1),
+         Hispanic = factor(Hispanic))
+
+#data management for marital status variable 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(MaritalStatus = ifelse(MaritalStatus=="Not Specified", NA, MaritalStatus))
+
+#data management for religion variable
+RiskClientScores <- RiskClientScores %>% 
+  mutate(Religion = ifelse(Religion == "Unknown", NA, Religion),
+         Religion = ifelse(Religion == "Atheist"|Religion=="Agnostic", 
+                           "Atheist/Agnostic", Religion),
+         Religion = ifelse(Religion %in% c("Catholic", "Christian", "Orthodox Christian",
+                                           "Pentecostal", "Baptist", "Mormon", "Protestant"), 
+                           "Christian", Religion))
+
+#data management for primary language 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(PrimaryLanguage = ifelse(PrimaryLanguage=="Not Specified"|PrimaryLanguage=="Unknown", NA, PrimaryLanguage))
+
+#data management for suicide risk 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(SuicideRiskLevel = ifelse(SuicideRiskLevel=="High risk - contact supervisor immediately, increase monitoring, seek clinical support",
+                                   "High risk", SuicideRiskLevel),
+         SuicideRiskLevel = ifelse(SuicideRiskLevel=="Moderate risk - review client's personal safety plan and implement as needed",
+                                   "Moderate risk", SuicideRiskLevel))
+
+#data management for homicide risk 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(HomocideRiskLevel = ifelse(HomocideRiskLevel=="High risk - contact supervisor immediately, increase monitoring, seek clinical support",
+                                    "High risk", HomocideRiskLevel),
+         HomocideRiskLevel = ifelse(HomocideRiskLevel=="Moderate risk - review client's personal safety plan and implement as needed",
+                                    "Moderate risk", HomocideRiskLevel))
+
 #saving datafile for further analysis 
 save(RiskClientScores, file = "cleaned.Rdata")
+
+#finding number of participants
+length(unique(RiskClientScores$StudyClientId))
+#1129 unique participants after data management 
