@@ -54,6 +54,16 @@ bivariate(RiskClientScores, "RiskLevel", "Success",
 #significant relationship btween risk level and success (X2 = 20.307, p = 0.0001466)
 #significant difference between low and high (adj.p = 0.0001), and moderate and high (p=0.0207)
 
+#program 
+bivariate(RiskClientScores, "ProgramName", "Success")
+#sig. relationship(X2 = 34.633, p < 0.0001)
+#sig. difference between Eddy Center and REACH (p =0.0000), and between REACH and the January Center (p = 0.0002)
+
+#form 
+bivariate(RiskClientScores, "Form", "Success")
+#sig. relationship between form and success (X2 = 10.874, p = 0.004352)
+#sig. relationship between RT and SRT (p = 0.0037)
+
 #race
 bivariate(RiskClientScores, "Race", "Success", 
           levels = c("Caucasian or White", "African American or Black", "Asian",
@@ -113,16 +123,6 @@ freq(RiskClientScores$SuicideRiskLevel)
 #homicide risk  
 bivariate(RiskClientScores, "HomocideRiskLevel", "Success")
 #no sig. relationship (X2 = 4.5689, p = 0.1018)
-
-#program 
-bivariate(RiskClientScores, "ProgramName", "Success")
-#sig. relationship(X2 = 34.633, p < 0.0001)
-#sig. difference between Eddy Center and REACH (p =0.0000), and between REACH and the January Center (p = 0.0002)
-
-#form 
-bivariate(RiskClientScores, "Form", "Success")
-#sig. relationship between form and success (X2 = 10.874, p = 0.004352)
-#sig. relationship between RT and SRT (p = 0.0037)
 
 ###### quantitative explanatories ########
 
