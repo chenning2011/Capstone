@@ -133,7 +133,42 @@ exp(logreg$coefficients)
 #sig. relationship between length of stay and success (z=3.459, p < 0.001)
 
 #age and outcome
-logreg <- glm(Success ~ AgeAtAdmission, data = RiskClientScores, family = "binomial") 
-summary(logreg)  
-exp(logreg$coefficients)  
+logreg2 <- glm(Success ~ AgeAtAdmission, data = RiskClientScores, family = "binomial") 
+summary(logreg2)  
+exp(logreg2$coefficients)  
 #no sig. relationship between age and success (z = -0.493, p = 0.6219)
+
+
+#basic logistic regression with all sig. vars 
+logregfull <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName, data = RiskClientScores, family = "binomial" )
+summary(logregfull)  
+exp(logregfull$coefficients) 
+#length of stay remains sig. when controlling for form, risk, and program (z = 5.315, p < 0.001)
+#risk level remains sig. when controlling for form, program, and length of stay
+#risk level of low is sig when compared to high (z = 3.998, p < 0.001)
+#risk level of moderate is sig when compared to high (z=3.113, p = 0.001852)
+#program name remains sig. when controlling for form, length of stay, and risk 
+#REACH is sig. when compared to Eddy Center (z = -6.745, p < 0.001)
+#Sherman is sig. when compared to Eddy Center (z = -2.434, p = 0.014927)
+#SIERRA is sig. when compared to Eddy Center (z = -3.872, p = 0.000108)
+#form is not sig. 
+
+
+#statistical writing: 
+# As length of stay increases by 1 day, participants' chances of successful outcomes increase by a factor of 1.0032
+# when controlling for form type, program name, and risk level (z = 5.315, p < 0.001).
+
+# Participants with a low risk level's chances of successful outcomes increase by a factor of 2.05, compared to 
+# participants with a high risk level, when controlling for form type, program name, and length of stay (z = 3.998, p < 0.001).
+
+# Participants with a moderate risk level's chances of successful outcomes increase by a factor of 1.729 compared to 
+# participants with a high risk level, when controlling for form type, program name, and length of stay (z=3.113, p = 0.001852).
+
+# Participants in the REACH program's chances of successful outcomes decrease by 68.60% when compared to 
+# participants in the Eddy Center, when controlling for form type, risk level, and length of stay (z = -6.745, p < 0.001).
+
+# Participants in the Roger Sherman House's chances of successful outcomes decrease by 40.6% when compared to 
+# participants in the Eddy Center, when controlling for form type, risk level, and length of stay (z = -2.434, p = 0.014927).
+
+# Participants in the SIERRA Center's chances of successful outcomes decrease by 50.86% when compared to 
+# participants in the Eddy Center, when controlling for form type, risk level, and length of stay (z = -3.872, p = 0.000108).
