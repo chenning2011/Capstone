@@ -138,6 +138,9 @@ summary(logreg2)
 exp(logreg2$coefficients)  
 #no sig. relationship between age and success (z = -0.493, p = 0.6219)
 
+sum(is.na(RiskClientScores$DischargeStatus))
+
+
 
 ###########basic logistic regression with all sig. vars ###################
 logregfull <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName, data = RiskClientScores, family = "binomial" )
