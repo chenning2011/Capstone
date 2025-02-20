@@ -5,6 +5,16 @@ library(tidyverse)
 load("cleaned.Rdata")
 load("duplicates.Rdata")
 
+#to-dos:
+#interactions w/risk scores 
+#random forest with all the variables 
+  #try regular and interaction 
+#collapse even more 
+  #clustering - is this going somewhere? 
+  #how do the patterns matter in the context of everything else? 
+#think about data management for discharge status 
+#clustering on dimensions of risk/criminality could be interesting
+
 ##### takeaways ############
 #sig. relationship btwn success (binary) and assessed risk level 
 #sig. relationship between success and program 
@@ -53,11 +63,17 @@ bivariate(RiskClientScores, "RiskLevel", "Success",
           levels = c("Low", "Moderate", "High", "Very High"))
 #significant relationship btween risk level and success (X2 = 20.307, p = 0.0001466)
 #significant difference between low and high (adj.p = 0.0001), and moderate and high (p=0.0207)
+freq(RiskClientScores$RiskLevel)
+#look at this in combination with demographic factors (does the relationship change by race? ethnicity? etc.)
 
 #program 
 bivariate(RiskClientScores, "ProgramName", "Success")
 #sig. relationship(X2 = 34.633, p < 0.0001)
 #sig. difference between Eddy Center and REACH (p =0.0000), and between REACH and the January Center (p = 0.0002)
+#some are for higher risk/higher security people 
+freq(RiskClientScores$ProgramName)
+
+freq(RiskClientScores$DischargeStatus)
 
 #form 
 bivariate(RiskClientScores, "Form", "Success")
