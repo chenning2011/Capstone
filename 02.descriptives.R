@@ -5,6 +5,19 @@ library(tidyverse)
 load("cleaned.Rdata")
 load("duplicates.Rdata")
 
+
+#survival analysis - preliminary 
+library(survival)
+library(survminer)
+surv <- survfit(Surv(LengthOfStay, Success)~1+cluster(StudyClientId), data = RiskClientScores)
+ggsurvplot(surv)
+
+surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
+ggsurvplot(surv.program)
+
+surv.cox <- coxph(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
+summary(surv.cox)
+
 #to-dos:
 #interactions w/risk scores 
 #random forest with all the variables 
