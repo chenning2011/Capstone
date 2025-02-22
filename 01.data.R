@@ -147,15 +147,15 @@ RiskClientScores <- EpisodeClientScores %>%
 
 #creating binary for successful vs not successful outcomes 
 RiskClientScores <- RiskClientScores %>% 
-  mutate(Success = ifelse(DischargeStatus=="Successful", 1, 0))
+  mutate(Success = ifelse(DischargeStatus=="Successful"|DischargeStatus=="Completed Program/Treatment", 1, 0))
 
 #data management for race variable
 RiskClientScores <- RiskClientScores %>% 
-  mutate(Race = ifelse(Race == "Some other race",
+  mutate(Race = ifelse(Race == "Some other race"|Race == "Asian"| Race == "Native"| 
+                         Race == "Other Pacific Islander"|Race == "Multi-Racial"|
+                         Race == "American Indian or Alaskan Native"| Race == "Native Hawaiian/Other Pacific Islander",
                        "Other", Race),
-         Race = ifelse(Race == "Undisclosed"|Race == "Not on file", NA, Race), 
-         Race = ifelse(Race == "American Indian or Alaskan Native"| Race == "Native Hawaiian/Other Pacific Islander",
-                       "Native", Race))
+         Race = ifelse(Race == "Undisclosed"|Race == "Not on file", NA, Race))
 
 #data management for ethnicity variable 
 RiskClientScores <- RiskClientScores %>% 
@@ -168,13 +168,16 @@ RiskClientScores <- RiskClientScores %>%
 
 #data management for marital status variable 
 RiskClientScores <- RiskClientScores %>% 
-  mutate(MaritalStatus = ifelse(MaritalStatus=="Not Specified", NA, MaritalStatus))
+  mutate(MaritalStatus = ifelse(MaritalStatus=="Not Specified", NA, MaritalStatus),
+         MaritalStatus = ifelse(MaritalStatus=="Divorced/Annulled"|
+                                  MaritalStatus=="Widow/widower"|
+                                  MaritalStatus=="Legally separated", "Separated", MaritalStatus))
 
 #data management for religion variable
 RiskClientScores <- RiskClientScores %>% 
   mutate(Religion = ifelse(Religion == "Unknown", NA, Religion),
-         Religion = ifelse(Religion == "Atheist"|Religion=="Agnostic", 
-                           "Atheist/Agnostic", Religion),
+         Religion = ifelse(Religion == "Atheist"|Religion=="Agnostic"|Religion =="None", 
+                           "None", Religion),
          Religion = ifelse(Religion %in% c("Catholic", "Christian", "Orthodox Christian",
                                            "Pentecostal", "Baptist", "Mormon", "Protestant"), 
                            "Christian", Religion))
@@ -182,6 +185,10 @@ RiskClientScores <- RiskClientScores %>%
 #data management for primary language 
 RiskClientScores <- RiskClientScores %>% 
   mutate(PrimaryLanguage = ifelse(PrimaryLanguage=="Not Specified"|PrimaryLanguage=="Unknown", NA, PrimaryLanguage))
+
+#data management for english as primary language 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(English = ifelse(PrimaryLanguage=="English", 1, 0))
 
 #data management for suicide risk 
 RiskClientScores <- RiskClientScores %>% 
@@ -196,6 +203,14 @@ RiskClientScores <- RiskClientScores %>%
                                     "High risk", HomocideRiskLevel),
          HomocideRiskLevel = ifelse(HomocideRiskLevel=="Moderate risk - review client's personal safety plan and implement as needed",
                                     "Moderate risk", HomocideRiskLevel))
+
+#collapsing categories for risk level 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(RiskLevel = ifelse(RiskLevel == "High"| RiskLevel =="Very High", "High", RiskLevel))
+
+#setting risk level reference level 
+RiskClientScores$RiskLevel <- factor(RiskClientScores$RiskLevel, levels = c("Low", "Moderate", "High"))
+
 
 #saving datafile for further analysis 
 save(RiskClientScores, file = "cleaned.Rdata")

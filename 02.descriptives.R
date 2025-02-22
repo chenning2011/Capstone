@@ -5,17 +5,16 @@ library(tidyverse)
 load("cleaned.Rdata")
 load("duplicates.Rdata")
 
-
 #survival analysis - preliminary 
 library(survival)
 library(survminer)
-surv <- survfit(Surv(LengthOfStay, Success)~1+cluster(StudyClientId), data = RiskClientScores)
+surv <- survfit(Surv(LengthOfStay, Success)~RiskLevel+cluster(StudyClientId), data = RiskClientScores)
 ggsurvplot(surv)
 
 surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
 ggsurvplot(surv.program)
 
-surv.cox <- coxph(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
+surv.cox <- coxph(Surv(LengthOfStay, Success)~RiskLevel+cluster(StudyClientId), data = RiskClientScores)
 summary(surv.cox)
 
 #to-dos:
@@ -28,11 +27,19 @@ summary(surv.cox)
 #think about data management for discharge status 
 #clustering on dimensions of risk/criminality could be interesting
 
+
+##### interactions #####
+#start with looking at success vs risk level and race 
+#then success vs risk level and ethnicity, veteran status, primary language, etc. 
+#can do the same for success vs program name 
+
 ##### takeaways ############
 #sig. relationship btwn success (binary) and assessed risk level 
 #sig. relationship between success and program 
 #sig. relationship between length of stay and success
 #sig. relationship between form and success 
+#sig. relationship between suicide risk and success (x2=8.0972, p=0.01745)
+  #sig. difference between moderate and no risk 
 
 ############function###########
 #creating a function to run chisquared test and create bar graph 
@@ -95,8 +102,7 @@ bivariate(RiskClientScores, "Form", "Success")
 
 #race
 bivariate(RiskClientScores, "Race", "Success", 
-          levels = c("Caucasian or White", "African American or Black", "Asian",
-                     "Native", "Multi-Racial", "Other"))
+          levels = c("Caucasian or White", "African American or Black", "Other"))
 #not sig. (X2 = 4.6412, p = 0.4612)
 freq(RiskClientScores$Race)
 #this could be because there are only 2 asian respondents - might want to group together more
@@ -118,9 +124,7 @@ bivariate(RiskClientScores, "IdentifiesAsLGBTQ", "Success")
 freq(RiskClientScores$IdentifiesAsLGBTQ)
 
 #marital status 
-bivariate(RiskClientScores, "MaritalStatus", "Success",
-          levels = c("Married", "Single/Never Married", "Divorced/Annulled",
-                     "Legally separated", "Widow/widower", "Other"))
+bivariate(RiskClientScores, "MaritalStatus", "Success")
 #no sig. relationship (X2 = 3.5526, p = 0.6154)
 freq(RiskClientScores$MaritalStatus)
 #mostly single people
@@ -136,6 +140,10 @@ bivariate(RiskClientScores, "PrimaryLanguage", "Success")
 #no sig. relationship (X2 = 5.3781, p = 0.2507)
 freq(RiskClientScores$PrimaryLanguage)
 #not many participants who speak primary languages other than english 
+
+#primary language - only english and not english 
+bivariate(RiskClientScores, "English", "Success")
+#not sig. at all, not even worth reporting, but could be good for interaction stuff
 
 #veteran 
 bivariate(RiskClientScores, "UsVeteran", "Success")
