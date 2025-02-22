@@ -182,13 +182,24 @@ RiskClientScores <- RiskClientScores %>%
                                            "Pentecostal", "Baptist", "Mormon", "Protestant"), 
                            "Christian", Religion))
 
+#setting reference level for religion variable 
+RiskClientScores$Religion <- factor(RiskClientScores$Religion, 
+                                    levels = c("None", "Christian", "Buddhist", "Islamic", "Jewish", "Other"))
+
 #data management for primary language 
 RiskClientScores <- RiskClientScores %>% 
   mutate(PrimaryLanguage = ifelse(PrimaryLanguage=="Not Specified"|PrimaryLanguage=="Unknown", NA, PrimaryLanguage))
 
+#setting reference level for primary language 
+RiskClientScores$PrimaryLanguage <- factor(RiskClientScores$PrimaryLanguage, 
+                                           levels = c("English", "Arabic", "Chinese/Mandarin", "Spanish", "Vietnamese"))
+
 #data management for english as primary language 
 RiskClientScores <- RiskClientScores %>% 
   mutate(English = ifelse(PrimaryLanguage=="English", 1, 0))
+
+#setting english as a factor 
+RiskClientScores$English <- factor(RiskClientScores$English)
 
 #data management for suicide risk 
 RiskClientScores <- RiskClientScores %>% 
@@ -197,6 +208,10 @@ RiskClientScores <- RiskClientScores %>%
          SuicideRiskLevel = ifelse(SuicideRiskLevel=="Moderate risk - review client's personal safety plan and implement as needed",
                                    "Moderate risk", SuicideRiskLevel))
 
+#setting suicide risk as factor and changing reference level 
+RiskClientScores$SuicideRiskLevel <- factor(RiskClientScores$SuicideRiskLevel, 
+                                            levels = c("No endorsed risk", "Moderate risk", "High risk"))
+
 #data management for homicide risk 
 RiskClientScores <- RiskClientScores %>% 
   mutate(HomocideRiskLevel = ifelse(HomocideRiskLevel=="High risk - contact supervisor immediately, increase monitoring, seek clinical support",
@@ -204,13 +219,16 @@ RiskClientScores <- RiskClientScores %>%
          HomocideRiskLevel = ifelse(HomocideRiskLevel=="Moderate risk - review client's personal safety plan and implement as needed",
                                     "Moderate risk", HomocideRiskLevel))
 
+#setting homicide risk as factor and changing reference level 
+RiskClientScores$HomocideRiskLevel <- factor(RiskClientScores$HomocideRiskLevel, 
+                                            levels = c("No endorsed risk", "Moderate risk", "High risk"))
+
 #collapsing categories for risk level 
 RiskClientScores <- RiskClientScores %>% 
   mutate(RiskLevel = ifelse(RiskLevel == "High"| RiskLevel =="Very High", "High", RiskLevel))
 
 #setting risk level reference level 
 RiskClientScores$RiskLevel <- factor(RiskClientScores$RiskLevel, levels = c("Low", "Moderate", "High"))
-
 
 #saving datafile for further analysis 
 save(RiskClientScores, file = "cleaned.Rdata")
