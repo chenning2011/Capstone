@@ -107,26 +107,6 @@ ClientScoresCST <- ClientScoresCST[,c(1:14,16:17,15)]
 #appending all three datasets
 ClientScoresAll <- bind_rows(ClientScoresCST, ClientScoresRT, ClientScoresSRT)
 
-#counting clientIds to find how many appear more than once
-duplicates <- ClientScoresAll %>% 
-  count(StudyClientId) %>% 
-  arrange(desc(n)) %>% 
-  filter(n > 1) %>% 
-  select(StudyClientId)
-
-#creating a list with duplicates to filter dataset
-#extracting only duplicate IDs
-duplicates_list <- list(duplicates$StudyClientId)
-duplicate <- duplicates_list[[1]]
-duplicate_data <- ClientScoresAll %>% 
-  filter(StudyClientId %in% duplicate)
-
-#saving duplicate data 
-save(duplicate_data, file ="duplicates.Rdata")
-
-length(unique(duplicate_data$StudyClientId))
-#there are 380 clients that have answered the forms more than once
-
 #combining the dataset with all client scores & info with episode data
 EpisodeClientScores <- left_join(ClientScoresAll, EpisodeData, by=c("StudyClientId", "StudyEpisodeId"))
 
@@ -141,6 +121,34 @@ RiskClientScores <- EpisodeClientScores %>%
   select(-(fldSuicideWishedDead:fldHomicidePreparationAddInfo), -(HomeTownCity:HomeTownZip), -Interim, -AssessmentTypeSuicide) %>% 
   filter(WhenTaken != "Interim")
 
+#---------------------------------------------------------
+# adding ctp data
+#---------------------------------------------------------
+#removing year and interim assessment from ctp 
+CtpData <- CtpData %>% 
+  filter(AssessmentType!="Interim Assessment") %>% 
+  select(-AssessmentYear, -AssessmentType)
+
+RiskClientScores <- RiskClientScores %>% 
+  left_join(CtpData, by = c("StudyClientId", "StudyEpisodeId"), 
+            relationship = "many-to-many")
+
+#counting clientIds to find how many appear more than once
+duplicates <- RiskClientScores %>% 
+  count(StudyClientId) %>% 
+  arrange(desc(n)) %>% 
+  filter(n > 1) %>% 
+  select(StudyClientId)
+
+#creating a list with duplicates to filter dataset
+#extracting only duplicate IDs
+duplicates_list <- list(duplicates$StudyClientId)
+duplicate <- duplicates_list[[1]]
+duplicate_data <- RiskClientScores %>% 
+  filter(StudyClientId %in% duplicate)
+
+#saving duplicate data 
+save(duplicate_data, file ="duplicates.Rdata")
 #---------------------------------------------------------
 # data management
 #---------------------------------------------------------
@@ -222,6 +230,11 @@ RiskClientScores <- RiskClientScores %>%
 #setting homicide risk as factor and changing reference level 
 RiskClientScores$HomocideRiskLevel <- factor(RiskClientScores$HomocideRiskLevel, 
                                             levels = c("No endorsed risk", "Moderate risk", "High risk"))
+
+#collapsing categories for suicide risk and homicide risk 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(Homicide = ifelse(HomocideRiskLevel=="No endorsed risk", "No risk", "Risk"),
+         Suicide = ifelse(SuicideRiskLevel=="No endorsed risk", "No risk", "Risk"))
 
 #collapsing categories for risk level 
 RiskClientScores <- RiskClientScores %>% 

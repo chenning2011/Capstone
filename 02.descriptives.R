@@ -93,8 +93,6 @@ bivariate(RiskClientScores, "ProgramName", "Success")
 #some are for higher risk/higher security people 
 freq(RiskClientScores$ProgramName)
 
-freq(RiskClientScores$DischargeStatus)
-
 #form 
 bivariate(RiskClientScores, "Form", "Success")
 #sig. relationship between form and success (X2 = 10.874, p = 0.004352)
@@ -153,13 +151,21 @@ freq(RiskClientScores$UsVeteran)
 
 #suicide risk 
 bivariate(RiskClientScores, "SuicideRiskLevel", "Success")
-#no sig. relationship (X2 = 6.2786, p = 0.04331)
+#sig. relationship (X2 = 6.2786, p = 0.04331)
 freq(RiskClientScores$SuicideRiskLevel)
 #likely influenced by there being basically no one with suicide risk
 
 #homicide risk  
 bivariate(RiskClientScores, "HomocideRiskLevel", "Success")
 #no sig. relationship (X2 = 4.5689, p = 0.1018)
+
+#suicide binary 
+bivariate(RiskClientScores, "Suicide", "Success")
+#sig. relationship (X2 = 5.5788, p = 0.01818)
+
+#homicide binary 
+bivariate(RiskClientScores, "Homicide", "Success")
+#no sig. 
 
 ###### quantitative explanatories ########
 
@@ -175,9 +181,14 @@ summary(logreg2)
 exp(logreg2$coefficients)  
 #no sig. relationship between age and success (z = -0.493, p = 0.6219)
 
+#looking at ctp vars 
+log3 <- glm(Success ~ InabilityToCope + EmotionallyDisengaged+RecklessImpulsivity+
+              PoorJudgement + outsourcingResponsibility + Justifying + Grandiosity + DisregardForOthers, data = RiskClientScores, 
+            family = "binomial")
+summary(log3)
+#only grandiosity is sig. 
+
 sum(is.na(RiskClientScores$DischargeStatus))
-
-
 
 ###########basic logistic regression with all sig. vars ###################
 logregfull <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName, data = RiskClientScores, family = "binomial" )
@@ -193,6 +204,12 @@ exp(logregfull$coefficients)
 #SIERRA is sig. when compared to Eddy Center (z = -3.872, p = 0.000108)
 #form is not sig. 
 
+logregctp <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName + EmotionallyDisengaged+RecklessImpulsivity+
+                   PoorJudgement + outsourcingResponsibility + Justifying + Grandiosity + DisregardForOthers, 
+                 data = RiskClientScores, family = "binomial" )
+summary(logregctp)  
+exp(logregctp$coefficients) 
+#still only grandiosity is relevant
 
 #statistical writing: 
 # As length of stay increases by 1 day, participants' chances of successful outcomes increase by a factor of 1.0032

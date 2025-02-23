@@ -1,10 +1,7 @@
 ##testing interactions between variables 
 
-#steps: 
-#2. run the function on all demographic variables 
-#3. look at results and figure out what to do from there 
-#4. if time, look into CTP data and dimensionality reduction with that and the other scores and stuff idk 
-#5. also try a random forest to isolate the most important variables (probably more important than a PCA thing)
+#next steps: reducing dimensions for CTP variables, if possible 
+  #try some clustering with those variables? 
 
 ##### function ####
 library(tidyverse)
@@ -49,7 +46,15 @@ interaction <- function(data, response, explanatory, interaction, levels=NULL){
   print(a)
 }
 
-##### analysis #####
+###### sig. results ######
+#interaction between risk level and marital status (b/c of sample size)
+#interaction between risk level and religion (b/c of sample size)
+#interaction between suicide and risk level 
+#tried a (bad) random forest and found that the most important variables were length of stay, age, programname, religion, risk level, race
+  #so need to move forward with survival analysis
+#when adding in all the ctp data, all of those variables are important (after age and lengthofstay)
+
+##### risk level interactions #####
 
 #risk level and race 
 interaction(RiskClientScores, "Success", "RiskLevel", "Race")
@@ -98,6 +103,124 @@ interaction(RiskClientScores, "Success", "RiskLevel", "SuicideRiskLevel")
 interaction(RiskClientScores, "Success", "RiskLevel", "HomocideRiskLevel")
 #sig. between high and low risk, sig. between moderate vs np risk for homicide, interaction between moderate risk and high homicide risk 
 
-#retry with just no vs. risk in both vars 
+#risk level and suicide binary
+interaction(RiskClientScores, "Success", "RiskLevel", "Suicide")
+#no sig. relationship here (just in risk level)
+#visually seems like there is something going on, but no statistical evidence of this
 
+#risk level and homicide binary 
+interaction(RiskClientScores, "Success", "RiskLevel", "Homicide")
+#sig. moderation (risk level * homicide)
 
+###### program name interactions ######
+#program and race 
+interaction(RiskClientScores, "Success", "ProgramName", "Race")
+#sig. in program name (REACH, Sherman, January) and race (Other)
+#interaction between other race and REACH (nowhere else though)
+
+#program and hispanic 
+interaction(RiskClientScores, "Success", "ProgramName", "Hispanic")
+#program name remains sig., nothing with hispanic status 
+#visually seems like there's something weird with the SIERRA center, could be a sample size problem? 
+
+#program and martial status 
+interaction(RiskClientScores, "Success", "ProgramName", "MaritalStatus")
+#something weird going on here 
+#likely sample size problems again (not enough married people/other people in some of the programs)
+
+#program and religion 
+interaction(RiskClientScores, "Success", "ProgramName", "Religion")
+#similar problem with marital status
+
+#program and primary langauge 
+interaction(RiskClientScores, "Success", "ProgramName", "PrimaryLanguage")
+#similar problem with marital status and religion
+
+#program and english 
+interaction(RiskClientScores, "Success", "ProgramName", "English")
+#january center only sig. program, and only one wiith interaction with english (english speakers are less successful there than normal)
+#weird though because january center has 100% success rate for non-english spakears, and almost 100% for english speakers. 
+
+#program and lgbtq 
+interaction(RiskClientScores, "Success", "ProgramName", "IdentifiesAsLGBTQ")
+#interaction, but LGBTQ+ ppl only exist in three of the centers, so not sure we can use this 
+
+#program and veteran status 
+interaction(RiskClientScores, "Success", "ProgramName", "UsVeteran")
+#there are barely any veterans, so this doesn't really work 
+
+#program and suicide risk level 
+interaction(RiskClientScores, "Success", "ProgramName", "SuicideRiskLevel")
+#lots going on here
+
+#program and homicide risk level 
+interaction(RiskClientScores, "Success", "ProgramName", "HomocideRiskLevel")
+#sig. between high and low risk, sig. between moderate vs np risk for homicide, interaction between moderate risk and high homicide risk 
+
+#program and suicide binary
+interaction(RiskClientScores, "Success", "ProgramName", "Suicide")
+#no one w/suicide risk in REACH
+
+#program and homicide binary 
+interaction(RiskClientScores, "Success", "ProgramName", "Homicide")
+#no one w homicide risk in two programs
+
+########## random forest ########
+library(randomForest)
+library(caret)
+
+#taking subset just with variables of interest for this 
+subset <- RiskClientScores %>% 
+  select(Race, IdentifiesAsLGBTQ, MaritalStatus, Religion, English, UsVeteran, Hispanic, 
+         RiskLevel, Form, ProgramName, AgeAtAdmission, LengthOfStay, LivingArrangementAtAdmission,
+         Suicide, Success, 38:45) %>% 
+  na.omit()
+
+subset$Success <- factor(subset$Success, levels = c(0, 1), labels = c("Failure", "Success"))
+subset <- subset %>%
+  mutate(across(where(is.character), as.factor))
+
+control <- trainControl(method="cv", 
+                        number=10,
+                        summary=twoClassSummary,
+                        classProbs=TRUE)
+set.seed(1234)
+fit.forest <- train(Success ~ ., 
+                    data=subset, 
+                    method="rf",
+                    metric="ROC",
+                    ntree=1000,
+                    trControl=control,
+                    tuneLength=3)
+fit.forest
+imp <- varImp(fit.forest)
+plot(imp)
+
+#splitting into training and testing data just for fun
+set.seed(1234)
+index <- createDataPartition(subset$Success, p=0.7, list=FALSE) 
+train <- subset[index, ]
+test  <- subset[-index, ]
+
+#running on training data 
+control <- trainControl(method="cv", 
+                        number=10,
+                        summary=twoClassSummary,
+                        classProbs=TRUE)
+set.seed(1234)
+fit.forest <- train(Success ~ ., 
+                    data=train, 
+                    method="rf",
+                    metric="ROC",
+                    ntree=1000,
+                    trControl=control,
+                    tuneLength=3)
+fit.forest
+imp <- varImp(fit.forest)
+plot(imp)
+
+#checking on testing data 
+pred <- predict(fit.forest, test)
+confusionMatrix(pred, test$Success, positive="Success")
+#not a terrible model, but certainly not a great one
+#model gets better after CTP data is added in, but still problematic
