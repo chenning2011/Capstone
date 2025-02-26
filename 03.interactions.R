@@ -1,11 +1,5 @@
 ##testing interactions between variables 
 
-#next steps: reducing dimensions for CTP variables, if possible 
-  #try some clustering with those variables? 
-#look into asus scale and run it in the random forest with the CTP vars, ones with less missing data 
-#run correlation matrix to figure out which ones overlap
-#run correlation matrix on CTP vars
-
 ##### function ####
 library(tidyverse)
 library(sandwich)
@@ -168,34 +162,4 @@ interaction(RiskClientScores, "Success", "ProgramName", "Suicide")
 interaction(RiskClientScores, "Success", "ProgramName", "Homicide")
 #no one w homicide risk in two programs
 
-########## random forest ########
-#this is better w/CTP and LSI type vars, things with less missing data 
-library(randomForest)
-library(caret)
 
-#taking subset just with variables of interest for this 
-subset <- RiskClientScores %>% 
-  select(Race, IdentifiesAsLGBTQ, MaritalStatus, Religion, English, UsVeteran, Hispanic, 
-         RiskLevel, Form, ProgramName, AgeAtAdmission, LengthOfStay, LivingArrangementAtAdmission,
-         Suicide, Success, 38:45) %>% 
-  na.omit()
-
-subset$Success <- factor(subset$Success, levels = c(0, 1), labels = c("Failure", "Success"))
-subset <- subset %>%
-  mutate(across(where(is.character), as.factor))
-
-control <- trainControl(method="cv", 
-                        number=10,
-                        summary=twoClassSummary,
-                        classProbs=TRUE)
-set.seed(1234)
-fit.forest <- train(Success ~ ., 
-                    data=subset, 
-                    method="rf",
-                    metric="ROC",
-                    ntree=1000,
-                    trControl=control,
-                    tuneLength=3)
-fit.forest
-imp <- varImp(fit.forest)
-plot(imp)
