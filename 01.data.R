@@ -53,7 +53,7 @@ ClientData <- read_excel("Data Files/ClientData.xlsx")
 #data on incidents that they could link clients to -> might not be as helpful
 #need more information on when these incidents are occuring (is it while they're under probation?)
 #for this one, download the new wide version from teams before doing work with 
-IncidentData <- read_excel("IncidentData.xlsx")
+IncidentData <- read_excel("Data Files/IncidentData.xlsx")
 
 #other data sets include: 
 #information on drugs taken and for how long 
