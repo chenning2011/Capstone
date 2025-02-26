@@ -43,7 +43,6 @@ cox.zph(surv.cox)
 #think about data management for discharge status 
 #clustering on dimensions of risk/criminality could be interesting
 
-
 ##### interactions #####
 #start with looking at success vs risk level and race 
 #then success vs risk level and ethnicity, veteran status, primary language, etc. 

@@ -13,42 +13,42 @@ library(readxl)
 
 #supplement to the re-entry form scores
 #applies only to people who have been incarcerated for less than 4 years
-ScoresSRTData <- read_excel("ScoresSRTData.xlsx")
+ScoresSRTData <- read_excel("Data Files/ScoresSRTData.xlsx")
 
 #re-entry form scores (scoring them before they re-enter the community)
 #condition to fill out this form: within 6 months of discharge/re-entry date and unrestricted by security concerns
 #this form is given to people who are in prison
 #each one of these forms is made to identify the likelihood of recidivism 
 #applies to people who have been in jail for more than 4 years
-ScoresRTData <- read_csv("ScoresRTData.csv")
+ScoresRTData <- read_csv("Data Files/ScoresRTData.csv")
 
 #community supervision tool scores
 #condition to fill out this form: charged with criminal offense and referred to probation 
 #these people are allowed to remain within the community, but are supervised
 #the form's goal is to help decide the level/needs for supervision
-ScoresCSTData <- read_excel("ScoresCSTData.xlsx")
+ScoresCSTData <- read_excel("Data Files/ScoresCSTData.xlsx")
 
 #where people are staying, how long they've been there, and past trauma they're willing to disclose
-EpisodeTraumaData <- read_excel("EpisodeTraumaData.xlsx")
+EpisodeTraumaData <- read_excel("Data Files/EpisodeTraumaData.xlsx")
 
 #suicide and homocide risk levels at admission for patients 
 #taken from a form - adapted from columbia suicide severity rating scale
-RiskDataRevised <- read_excel("RiskDataRevised.xlsx")
+RiskDataRevised <- read_excel("Data Files/RiskDataRevised.xlsx")
 
 #this is the most important one 
 #this contains information on the patients discharge dates, where they went to, where they were before
 #also their income levels and residences, if applicable 
-EpisodeData <- read_excel("EpisodeData.xlsx")
+EpisodeData <- read_excel("Data Files/EpisodeData.xlsx")
 
 #this one is interesting, but might not be as useful
 #essentially looking at a series of 65 questions, each of which is scored from 0-4 
 #each of the scores is tallied and relates to a specific category, which is given an overall score 
 #these scores are risk ratings, and have "normal ranges" that people can go outside of 
 #would need to categorize these scores 
-CtpData <- read_excel("CtpData.xlsx")
+CtpData <- read_excel("Data Files/CtpData.xlsx")
 
 #demographic information
-ClientData <- read_excel("ClientData.xlsx")
+ClientData <- read_excel("Data Files/ClientData.xlsx")
 
 #data on incidents that they could link clients to -> might not be as helpful
 #need more information on when these incidents are occuring (is it while they're under probation?)
