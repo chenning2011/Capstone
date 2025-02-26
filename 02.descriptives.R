@@ -6,16 +6,32 @@ load("cleaned.Rdata")
 load("duplicates.Rdata")
 
 #survival analysis - preliminary 
+
+#maybe look into housing at release and length of stay 
+#ppl might be being held until they find somewhere to live? 
 library(survival)
 library(survminer)
 surv <- survfit(Surv(LengthOfStay, Success)~RiskLevel+cluster(StudyClientId), data = RiskClientScores)
-ggsurvplot(surv)
+ggsurvplot(surv)$plot + geom_vline(xintercept=120)
+
+ggsurvplot(surv, fun = "cloglog")
 
 surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
-ggsurvplot(surv.program)
+ggsurvplot(surv.program)$plot + geom_vline(xintercept=120)
 
-surv.cox <- coxph(Surv(LengthOfStay, Success)~RiskLevel+cluster(StudyClientId), data = RiskClientScores)
+surv.cox <- coxph(Surv(LengthOfStay, Success)~RiskLevel+ProgramName+Form+Suicide+cluster(StudyClientId), data = RiskClientScores)
 summary(surv.cox)
+
+surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
+ggsurvplot(surv.program, fun = "cloglog")
+#stratify by program or type of program
+
+surv.form <- survfit(Surv(LengthOfStay, Success)~Form, data = RiskClientScores)
+ggsurvplot(surv.form, fun = "cloglog")
+
+cox.zph(surv.cox)
+
+#need to stratify, these are all bad 
 
 #to-dos:
 #interactions w/risk scores 

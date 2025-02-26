@@ -166,6 +166,7 @@ interaction(RiskClientScores, "Success", "ProgramName", "Homicide")
 #no one w homicide risk in two programs
 
 ########## random forest ########
+#this is better w/CTP and LSI type vars, things with less missing data 
 library(randomForest)
 library(caret)
 
