@@ -6,11 +6,6 @@
 library(tidyverse)
 library(readxl)
 
-#remove anything that says interim assessment
-#add in ctp 
-#work on bivariate descriptives
-#talk to val about survival with multiple obs per person (mixed interrupted survival analysis)
-
 #supplement to the re-entry form scores
 #applies only to people who have been incarcerated for less than 4 years
 ScoresSRTData <- read_excel("Data Files/ScoresSRTData.xlsx")

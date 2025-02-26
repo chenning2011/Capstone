@@ -11,11 +11,6 @@ load("duplicates.Rdata")
 #think about data management for discharge status 
 #clustering on dimensions of risk/criminality could be interesting
 
-##### interactions #####
-#start with looking at success vs risk level and race 
-#then success vs risk level and ethnicity, veteran status, primary language, etc. 
-#can do the same for success vs program name 
-
 ##### takeaways ############
 #sig. relationship btwn success (binary) and assessed risk level 
 #sig. relationship between success and program 

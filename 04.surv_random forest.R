@@ -1,5 +1,9 @@
 #survival analysis and random forest
 
+library(tidyverse)
+load("cleaned.Rdata")
+load("duplicates.Rdata")
+
 #survival analysis - preliminary 
 
 #maybe look into housing at release and length of stay 
