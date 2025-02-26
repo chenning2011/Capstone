@@ -2,6 +2,9 @@
 
 #next steps: reducing dimensions for CTP variables, if possible 
   #try some clustering with those variables? 
+#look into asus scale and run it in the random forest with the CTP vars, ones with less missing data 
+#run correlation matrix to figure out which ones overlap
+#run correlation matrix on CTP vars
 
 ##### function ####
 library(tidyverse)
@@ -196,32 +199,3 @@ fit.forest <- train(Success ~ .,
 fit.forest
 imp <- varImp(fit.forest)
 plot(imp)
-
-#splitting into training and testing data just for fun
-set.seed(1234)
-index <- createDataPartition(subset$Success, p=0.7, list=FALSE) 
-train <- subset[index, ]
-test  <- subset[-index, ]
-
-#running on training data 
-control <- trainControl(method="cv", 
-                        number=10,
-                        summary=twoClassSummary,
-                        classProbs=TRUE)
-set.seed(1234)
-fit.forest <- train(Success ~ ., 
-                    data=train, 
-                    method="rf",
-                    metric="ROC",
-                    ntree=1000,
-                    trControl=control,
-                    tuneLength=3)
-fit.forest
-imp <- varImp(fit.forest)
-plot(imp)
-
-#checking on testing data 
-pred <- predict(fit.forest, test)
-confusionMatrix(pred, test$Success, positive="Success")
-#not a terrible model, but certainly not a great one
-#model gets better after CTP data is added in, but still problematic
