@@ -50,6 +50,9 @@ ClientData <- read_excel("Data Files/ClientData.xlsx")
 #for this one, download the new wide version from teams before doing work with 
 IncidentData <- read_excel("Data Files/IncidentData.xlsx")
 
+#ASUS substance use data 
+ASUS_dimension_scores <- read_excel("Data Files/ASUS_dimension_scores.xlsx")
+
 #other data sets include: 
 #information on drugs taken and for how long 
 #information on meetings with the people in the program, how many and how long they were 
@@ -127,6 +130,16 @@ CtpData <- CtpData %>%
 RiskClientScores <- RiskClientScores %>% 
   left_join(CtpData, by = c("StudyClientId", "StudyEpisodeId"), 
             relationship = "many-to-many")
+
+#adding ASUS data 
+ASUS_dimension_scores <- ASUS_dimension_scores %>% 
+  rename(StudyClientId = StudyClientID,
+         StudyEpisodeId = StudyEpisodeID)
+
+
+RiskClientScores <- RiskClientScores %>% 
+  left_join(ASUS_dimension_scores, by = c("StudyClientId", "StudyEpisodeId"), 
+            relationship = "many-to-many") 
 
 #counting clientIds to find how many appear more than once
 duplicates <- RiskClientScores %>% 
@@ -244,3 +257,4 @@ save(RiskClientScores, file = "cleaned.Rdata")
 #finding number of participants
 length(unique(RiskClientScores$StudyClientId))
 #1129 unique participants after data management 
+
