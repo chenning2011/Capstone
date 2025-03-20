@@ -290,3 +290,20 @@ save(RiskClientScores, file = "cleaned.Rdata")
 length(unique(RiskClientScores$StudyClientId))
 #1129 unique participants after data management 
 
+#---------------------------------------------------------
+# correlations in asus and ctp data (trying to reduce dimensions)
+#---------------------------------------------------------
+
+library(qacBase)
+
+#getting correlation matrix for quantitative variables in the dataset 
+cor_plot(ASUS_dimension_scores)
+#many of these numbers are highly correlated (almost have a correlation of 1)
+#need to do something with these numbers 
+
+#ctp data 
+cor_plot(CtpData)
+#high correlation between recklessimpulsivity and poor judgement, 
+#poor judgement and justifying/disregard for others, and justifying and disregard for others
+#all values positively correlated
+

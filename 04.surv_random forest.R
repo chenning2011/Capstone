@@ -34,23 +34,36 @@ ggsurvplot(surv.form, fun = "cloglog")
 cox.zph(surv.cox)
 
 #stratifying based on type of program 
-subset <- RiskClientScores[RiskClientScores$ProgramName == "Roger Sherman House"|
+s <- RiskClientScores[RiskClientScores$ProgramName == "Roger Sherman House"|
                            RiskClientScores$ProgramName == "SIERRA Center - Work Release"|
                            RiskClientScores$ProgramName == "Eddy Center",]
 subset2 <- RiskClientScores[RiskClientScores$ProgramName == "The January Center"|
                             RiskClientScores$ProgramName == "REACH (ReEntry Assisted Community Housing)",]
 
 #less intense programs only 
-surv.subset <- coxph(Surv(LengthOfStay, Success)~RiskLevel, data = subset)
+surv.subset <- coxph(Surv(LengthOfStay, Success)~RiskLevel, data = s)
 summary(surv.subset)
 #risk level high is significantly associated with lower hazards when compared to ppl with low risk levels
 #therefore, ppl with high risk level are less likely to successfully complete the program 
+
+#visualization
+surv.subsetfit <- survfit(Surv(LengthOfStay, Success)~RiskLevel, data = s)
+ggsurvplot(surv.subsetfit)$plot + geom_vline(xintercept = 120)
+
+#testing assumptions 
+ggsurvplot(surv.subsetfit, fun = "cloglog")
 cox.zph(surv.subset)
 
 #more intense programs only 
 surv.subset2 <- coxph(Surv(LengthOfStay, Success)~RiskLevel, data = subset2)
+summary(surv.subset2)
+#no difference between risk levels in the more intense programs
+
+#visualizations
 surv.subset2fit <- survfit(Surv(LengthOfStay, Success)~RiskLevel, data = subset2)
-ggsurvplot(surv.subset2fit)
+ggsurvplot(surv.subset2fit)$plot + geom_vline(xintercept=120)
+
+#testing assumtions
 ggsurvplot(surv.subset2fit, fun = "cloglog")
 cox.zph(surv.subset2)
 
@@ -92,4 +105,3 @@ plot(imp)
 #run correlation matrix to figure out which ones overlap
 #run correlation matrix on CTP vars
 #do a new random forest 
-#look at length of stay by some of these newer variables, re-run survival 
