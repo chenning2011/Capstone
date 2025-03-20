@@ -98,10 +98,3 @@ fit.forest <- train(Success ~ .,
 fit.forest
 imp <- varImp(fit.forest)
 plot(imp)
-
-#next steps: reducing dimensions for CTP variables, if possible 
-#try some clustering with those variables? 
-#look into asus scale and run it in the random forest with the CTP vars, ones with less missing data 
-#run correlation matrix to figure out which ones overlap
-#run correlation matrix on CTP vars
-#do a new random forest 

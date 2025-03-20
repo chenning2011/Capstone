@@ -307,3 +307,10 @@ cor_plot(CtpData)
 #poor judgement and justifying/disregard for others, and justifying and disregard for others
 #all values positively correlated
 
+#next steps for next energy burst 
+#1. do some dimensionality reduction with CTP and ASUS data (try both clustering and PCA type things, look through EDA notes)
+#2. multinomial regressions on new outcome variable 
+#3. review all results and decide on methodology - meet with jen about this (try to have clustering and multinomials done before then)
+#4. begin writing out all the sections i can of the paper, adapt proposal material based on what i've been doing 
+
+
