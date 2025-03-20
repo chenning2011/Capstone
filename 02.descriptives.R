@@ -164,9 +164,7 @@ log3 <- glm(Success ~ InabilityToCope + EmotionallyDisengaged+RecklessImpulsivit
               PoorJudgement + outsourcingResponsibility + Justifying + Grandiosity + DisregardForOthers, data = RiskClientScores, 
             family = "binomial")
 summary(log3)
-#only grandiosity is sig. 
-
-sum(is.na(RiskClientScores$DischargeStatus))
+#justifying and disregardforothers are sig. 
 
 ###########basic logistic regression with all sig. vars ###################
 logregfull <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName, data = RiskClientScores, family = "binomial" )
@@ -187,7 +185,7 @@ logregctp <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName + Emoti
                  data = RiskClientScores, family = "binomial" )
 summary(logregctp)  
 exp(logregctp$coefficients) 
-#still only grandiosity is relevant
+#after controlling, only justifying remains sig. (out of ctp vars at least)
 
 #statistical writing: 
 # As length of stay increases by 1 day, participants' chances of successful outcomes increase by a factor of 1.0032

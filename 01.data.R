@@ -33,7 +33,13 @@ RiskDataRevised <- read_excel("Data Files/RiskDataRevised.xlsx")
 #this is the most important one 
 #this contains information on the patients discharge dates, where they went to, where they were before
 #also their income levels and residences, if applicable 
-EpisodeData <- read_excel("Data Files/EpisodeData.xlsx")
+EpisodeData <- read_excel("Data Files/EpisodeData.xlsx", 
+                          col_types = c("numeric", "numeric", "text", 
+                                         "text", "numeric", "numeric", "numeric", 
+                                         "numeric", "text", "text", "text", 
+                                         "text", "numeric", "text", "text", 
+                                         "numeric", "text", "text", "text", 
+                                         "text", "skip"))
 
 #this one is interesting, but might not be as useful
 #essentially looking at a series of 65 questions, each of which is scored from 0-4 
@@ -81,7 +87,7 @@ ClientScoresCST <- ClientData %>%
   right_join(ScoresCSTData, by ="StudyClientId", relationship = "many-to-many") %>% 
   filter(AssessmentType != "Interim Assessment") %>% 
   mutate(RiskLevel = ifelse(ProfessionalOverride == 1, RiskLevelFinalOverride, RiskLevel)) %>% 
-  select(-(Q1_1:Q7_Score), -ProfessionalOverride, -RiskLevelFinalOverride, -BiologicalGender)
+  select(-(Q1_1:Q7_Score), -ProfessionalOverride, -RiskLevelFinalOverride, -BiologicalGender) 
 
 #joining clientdata w/clientscoresRT
 ClientScoresRT <- ClientData %>% 
@@ -108,34 +114,39 @@ ClientScoresAll <- bind_rows(ClientScoresCST, ClientScoresRT, ClientScoresSRT)
 #combining the dataset with all client scores & info with episode data
 EpisodeClientScores <- left_join(ClientScoresAll, EpisodeData, by=c("StudyClientId", "StudyEpisodeId"))
 
-#changing assessmentyear and type variables so that they don't match the exact names 
+#changing assessmentyear and type variables so that they don't match the exact names
+#removing interim assessments and keeping only distinct pairs to prepare for joining to larger dataset
 RiskDataRevised <- RiskDataRevised %>% 
-  rename(AssessmentTypeSuicide = AssessmentType, AssessmentYearSuicide = AssessmentYear)
+  rename(AssessmentTypeSuicide = AssessmentType, AssessmentYearSuicide = AssessmentYear) %>% 
+  filter(WhenTaken != "Interim") %>% 
+  distinct(StudyClientId, StudyEpisodeId, .keep_all = T)
 
 #combining full dataset with homicide/suicide risk data 
 RiskClientScores <- EpisodeClientScores %>% 
   left_join(RiskDataRevised, by = c("StudyClientId", "StudyEpisodeId"),
             relationship = "many-to-many") %>% 
-  select(-(fldSuicideWishedDead:fldHomicidePreparationAddInfo), -(HomeTownCity:HomeTownZip), -Interim, -AssessmentTypeSuicide) %>% 
+  select(-(fldSuicideWishedDead:fldHomicidePreparationAddInfo), -(HomeTownCity:HomeTownState), -Interim, -AssessmentTypeSuicide) %>% 
   filter(WhenTaken != "Interim")
 
 #---------------------------------------------------------
 # adding ctp data
 #---------------------------------------------------------
 #removing year and interim assessment from ctp 
+#keeping only distinct data so that if someone was given the CTP 
+#assessment more than once, only the first listed results are kept to prepare for join
 CtpData <- CtpData %>% 
   filter(AssessmentType!="Interim Assessment") %>% 
-  select(-AssessmentYear, -AssessmentType)
+  select(-AssessmentYear, -AssessmentType) %>% 
+  distinct(StudyClientId, StudyEpisodeId, .keep_all = T)
 
 RiskClientScores <- RiskClientScores %>% 
   left_join(CtpData, by = c("StudyClientId", "StudyEpisodeId"), 
             relationship = "many-to-many")
 
-#adding ASUS data 
+#adding in ASUS data 
 ASUS_dimension_scores <- ASUS_dimension_scores %>% 
   rename(StudyClientId = StudyClientID,
          StudyEpisodeId = StudyEpisodeID)
-
 
 RiskClientScores <- RiskClientScores %>% 
   left_join(ASUS_dimension_scores, by = c("StudyClientId", "StudyEpisodeId"), 
@@ -153,17 +164,37 @@ duplicates <- RiskClientScores %>%
 duplicates_list <- list(duplicates$StudyClientId)
 duplicate <- duplicates_list[[1]]
 duplicate_data <- RiskClientScores %>% 
-  filter(StudyClientId %in% duplicate)
+  filter(StudyClientId %in% duplicate) %>% 
+  select(StudyClientId, StudyEpisodeId, everything())
 
 #saving duplicate data 
 save(duplicate_data, file ="duplicates.Rdata")
+
+#removing some unexplainable duplicates that appear to be errors 
+RiskClientScores <- RiskClientScores %>% 
+  filter(!(StudyClientId==54 & StudyEpisodeId == 3029 & AssessmentYear == 2022)) %>% 
+  filter(!(StudyClientId==1759 & StudyEpisodeId == 3445 & AssessmentYear == 2023))
+
 #---------------------------------------------------------
 # data management
 #---------------------------------------------------------
-
 #creating binary for successful vs not successful outcomes 
 RiskClientScores <- RiskClientScores %>% 
-  mutate(Success = ifelse(DischargeStatus=="Successful"|DischargeStatus=="Completed Program/Treatment", 1, 0))
+  mutate(Success = ifelse(DischargeStatus %in% c("Successful", "Transferred", 
+                                                 "Completed Program/Treatment","Auto-Discharged"), 
+                          1, 0))
+
+#creating 3-level outcome variable for multinomial regressions
+RiskClientScores <- RiskClientScores %>%
+  mutate(Outcome = case_when(DischargeStatus %in% c("Successful", "Transferred",
+                                                    "Completed Program/Treatment",
+                                                    "Auto-Discharged") ~ "Successful", 
+                             DischargeStatus %in% c("Arrested New", "Escaped",
+                                                    "Discharged to Higher Level of Care", 
+                                                    "Remanded") ~ "Unsuccessful", 
+                             DischargeStatus %in% c("Deceased", "Medical") ~ "Neutral")
+  )
+
 
 #data management for race variable
 RiskClientScores <- RiskClientScores %>% 
@@ -184,10 +215,11 @@ RiskClientScores <- RiskClientScores %>%
 
 #data management for marital status variable 
 RiskClientScores <- RiskClientScores %>% 
-  mutate(MaritalStatus = ifelse(MaritalStatus=="Not Specified", NA, MaritalStatus),
-         MaritalStatus = ifelse(MaritalStatus=="Divorced/Annulled"|
-                                  MaritalStatus=="Widow/widower"|
-                                  MaritalStatus=="Legally separated", "Separated", MaritalStatus))
+  mutate(MaritalStatus = case_when(MaritalStatus=="Not Specified" ~ NA, 
+                                   MaritalStatus %in% c("Divorced/Annulled", "Widow/widower", 
+                                                        "Legally separated", "Other", 
+                                                        "Single/Never Married") ~ "Not Currently Married",
+                                   MaritalStatus=="Married" ~ "Married"))
 
 #data management for religion variable
 RiskClientScores <- RiskClientScores %>% 
