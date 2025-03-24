@@ -301,11 +301,13 @@ cor_plot(ASUS_dimension_scores)
 #many of these numbers are highly correlated (almost have a correlation of 1)
 #need to do something with these numbers 
 
+#go through and just isolate the overarching categories because they overlap a lot, look through ASUS document
+
 #ctp data 
 cor_plot(CtpData)
 #high correlation between recklessimpulsivity and poor judgement, 
 #poor judgement and justifying/disregard for others, and justifying and disregard for others
-#all values positively correlated
+#all values positively correlated, no need to really do anything with this
 
 #next steps for next energy burst 
 #1. do some dimensionality reduction with CTP and ASUS data (try both clustering and PCA type things, look through EDA notes)
@@ -313,4 +315,7 @@ cor_plot(CtpData)
 #3. review all results and decide on methodology - meet with jen about this (try to have clustering and multinomials done before then)
 #4. begin writing out all the sections i can of the paper, adapt proposal material based on what i've been doing 
 
-
+subset <- ASUS_dimension_scores[,c("GLOBAL_AOD_PSYCHOSOCIAL2", "DEFENSIVE", "MOTIVATION_TO_CHANGE", "STRENGTHS", "AOD_USE_BENEFITS", "SOCIAL_NON_CONFORMING")]
+cor_plot(subset)
+#use these variables from ASUS and all the CTP variables
+#work on creating an outline for the paper and send it to jen 

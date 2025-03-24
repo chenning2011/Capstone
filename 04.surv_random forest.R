@@ -72,11 +72,13 @@ cox.zph(surv.subset2)
 library(randomForest)
 library(caret)
 
+library(qacBase)
+df_plot(RiskClientScores)
+
 #taking subset just with variables of interest for this 
 subset <- RiskClientScores %>% 
-  select(Race, IdentifiesAsLGBTQ, MaritalStatus, Religion, English, UsVeteran, Hispanic, 
-         RiskLevel, Form, ProgramName, AgeAtAdmission, LengthOfStay, LivingArrangementAtAdmission,
-         Suicide, Success, 38:45, AOD_INVOLVEMENT1:STRENGTHS) %>% 
+  select(RiskLevel, ProgramName, AgeAtAdmission, Success, 
+         38:45, Suicide) %>% 
   na.omit()
 
 subset$Success <- factor(subset$Success, levels = c(0, 1), labels = c("Failure", "Success"))
@@ -98,3 +100,6 @@ fit.forest <- train(Success ~ .,
 fit.forest
 imp <- varImp(fit.forest)
 plot(imp)
+#finding interesting things when you do smaller scale analysis, things seem important, but then adding everything else in diminishes their impact - need to do more exploratory methods
+
+

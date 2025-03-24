@@ -85,5 +85,6 @@ multinomial(RiskClientScores, "Homicide", "Outcome")
 #not sure which variables are most interesting quantitatively 
 #this probably goes back to needing to reduce dimensions with all of the CTP and ASUS variables so i should do that but i dont wanna 
 
-
+#focus on machine learning to identify the factors that have most influence 
+#-lasso, gradient boosting, etc. just try out different methods on the data 
 
