@@ -18,7 +18,7 @@ ggsurvplot(surv, fun = "cloglog")
 
 #adding more variables
 surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
-ggsurvplot(surv.program)$plot + geom_vline(xintercept=120)
+ggsurvplot(surv.program)$plot + geom_vline(xintercept=120)+theme(legend.position = "right")+guides(color = guide_legend(nrow=5))
 
 #adding all variables
 surv.cox <- coxph(Surv(LengthOfStay, Success)~RiskLevel+ProgramName+Form+Suicide+cluster(StudyClientId), data = RiskClientScores)

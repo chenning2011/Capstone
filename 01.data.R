@@ -184,6 +184,8 @@ RiskClientScores <- RiskClientScores %>%
                                                  "Completed Program/Treatment","Auto-Discharged"), 
                           1, 0))
 
+#no more neutral people allowed 
+
 #creating 3-level outcome variable for multinomial regressions
 RiskClientScores <- RiskClientScores %>%
   mutate(Outcome = case_when(DischargeStatus %in% c("Successful", "Transferred",

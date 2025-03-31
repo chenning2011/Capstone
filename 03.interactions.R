@@ -162,4 +162,6 @@ interaction(RiskClientScores, "Success", "ProgramName", "Suicide")
 interaction(RiskClientScores, "Success", "ProgramName", "Homicide")
 #no one w homicide risk in two programs
 
-
+#program and homicide binary 
+interaction(RiskClientScores, "Success", "ProgramName", "RiskLevel")
+#no one w homicide risk in two programs

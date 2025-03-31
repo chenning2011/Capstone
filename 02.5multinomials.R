@@ -88,3 +88,12 @@ multinomial(RiskClientScores, "Homicide", "Outcome")
 #focus on machine learning to identify the factors that have most influence 
 #-lasso, gradient boosting, etc. just try out different methods on the data 
 
+#full regression with age, CTP vars, program name, and risk level 
+mod1 <- multinom(Outcome ~ AgeAtAdmission + Grandiosity + DisregardForOthers + EmotionallyDisengaged+
+                   InabilityToCope + RecklessImpulsivity + PoorJudgement + Justifying + outsourcingResponsibility +
+                   RiskLevel + ProgramName + Suicide, data = RiskClientScores)
+summary(mod1)
+exp(summary(mod1)$coefficients)
+z <- summary(mod1)$coefficients/summary(mod1)$standard.errors 
+p <- (1- pnorm(abs(z), 0, 1)) * 2 
+p
