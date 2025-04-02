@@ -1,4 +1,4 @@
-#survival analysis and random forest
+#survival analysis and machine learning models 
 
 library(tidyverse)
 library(randomForest)
@@ -155,6 +155,8 @@ model.lasso <- train(
   family = "binomial"
 )
 
+model.lasso$finalModel
+
 #looking at the variables that lasso identified
 x <- coef(model.lasso$finalModel, model.lasso$bestTune$lambda)
 x <- as.matrix(x)
@@ -162,9 +164,8 @@ x[x!=0,1]
 #exponentiated values 
 exp(x[x!=0,1])
 #included the variables risk level, program name, grandiosity, suicide risk, 
-#race (but only white when compared to black)
+#race (but only white when compared to black) - these are considered sig. in this model
 #it removed all other CTP vars, other race, and age
-#see if i can make a visualization out of this information 
 
 #getting variable importance
 imp <- varImp(model.lasso)
@@ -205,6 +206,7 @@ model.stepAIC <- train(Success ~ ., data=sub,
                        family = "binomial", 
                        metric="ROC")
 summary(model.stepAIC$finalModel)
+#sig. variables here are risk, programs, and justifying 
 
 #number of vars 
 length(model.stepAIC$finalModel$coefficients)-1
@@ -274,7 +276,7 @@ imp %>%
   scale_fill_brewer(palette ="Set2", direction = -1)
 
 #---------------------------------------------------------
-# takeaways
+# takeaways from ML models
 #---------------------------------------------------------
 
 #Random forest identified the following variables as important: 
@@ -290,16 +292,91 @@ imp %>%
 #all, but especially REACH, age, grandiosity, January Center, Risk high and inability to cope
 
 #---------------------------------------------------------
-# logistic regression with all the overlapping variables
+# logistic regression w/train method w/all vars in sub
 #---------------------------------------------------------
 
-logregctp <- glm(Success ~ RiskLevel + ProgramName + Grandiosity + Suicide + 
-                 PoorJudgement + Justifying, 
-                 data = RiskClientScores, family = "binomial" )
-summary(logregctp) 
-#sig. vars include risk level and all programs after controlling 
-#for the other selected variables
-exp(logregctp$coefficients) 
+#logistic regression 
+set.seed(1234)
+model.glm <- train(Success~., 
+                   data = sub, 
+                   method = "glm", 
+                   tuneLength=3,
+                   trControl = control,
+                   metric="ROC")
+model.glm
 
+#looking closer at this model 
+model.glm$finalModel
 
+#looking for significance 
+summary(model.glm$finalModel)
+#sig. variables are risk level, all programs, justifying
+
+#taking the exponent b/c these are logged
+exp(model.glm$finalModel$coefficients)
+
+#getting relative importance of the variables 
+imp <- varImp(model.glm)
+
+#turning it into a dataframe 
+df <- imp$importance
+df$name <- rownames(df)
+
+#creating categories for the variables 
+df <- df %>% 
+  mutate(type = case_when(
+    name %in% c("RiskLevelModerate", "RiskLevelHigh") ~ "Risk Level",
+    name %in% c("AgeAtAdmission", "`RaceCaucasian or White`", "RaceOther") ~ "Demographic",
+    str_detect(name, "ProgramName") ~ "Program Name", 
+    name=="SuicideRisk" ~ "Suicide Risk", 
+    TRUE ~ "Criminal Thinking Profile"
+  ))
+
+#graphing the variable importance
+df %>% 
+  filter(Overall > 0) %>% 
+  ggplot()+
+  geom_col(aes(x=reorder(name, Overall), y=Overall, fill=type))+
+  coord_flip()+
+  labs(x="", title = "Relative Importance of Variables in Logistic Regression Model", 
+       y = "Importance", fill = "Variable Type", 
+       caption = "")+
+  theme_minimal()+
+  scale_fill_brewer(palette ="Set2", direction = -1)
+
+#most important variables are program, risk level, 
+#then jusitfying, grandiosity, suicide risk, race white
+
+#overall, getting a sense that the CTP variables actually aren't that good 
+#as predictors, and generally aren't significant 
+#---------------------------------------------------------
+# plotting the CV to find the best model 
+#---------------------------------------------------------
+## compare models
+results <- resamples(list(forest = fit.forest,
+                          lasso = model.lasso, 
+                          stepwise = model.stepAIC,
+                          gbm = model.gbm, 
+                          glm = model.glm))
+
+#numeric comparison between all the models 
+summary(results)
+
+#visual comparison between all the models
+bwplot(results,
+       scales =list(x=list(relation = "free")))
+dotplot(results,
+        scales =list(x=list(relation = "free")))
+
+#need to decide which is best based on all the numbers 
+#lasso is only slightly better than logistic regression in terms of ROC 
+#glm a bit better on sens/spec than lasso 
+
+#overall, in every model, participants in REACH are deemed an important predictor 
+#being in REACH makes you less likely to succeed in the program, no matter what 
+#this is especially true for participants who are deemed high risk 
+#these participants need more support 
+
+#need to figure out if i use the lasso variables or just all of the variables in the model? 
+#where do i go from here? 
 
