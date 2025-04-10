@@ -12,6 +12,9 @@ load("duplicates.Rdata")
 #making new dataset for graphing purposes
 alluvial <- RiskClientScores
 
+#sober house is work release for ppl w drug problems 
+#scattered site is a small site - REACH is one of them, provides ppl with housing
+
 #collapsing categories
 alluvial <- alluvial %>% 
   mutate(LivingArrangementAtAdmission = case_when(
@@ -84,4 +87,41 @@ ggplot(alluvial_long, aes(x=Time, stratum=Arrangement, alluvium=id, y=prop,fill=
   scale_y_continuous(labels = scales::percent)
 
 
-#take a look at risk/success within programs as well     
+#take a look at risk/success within programs as well   
+
+#creating alluvial with anonymized programs 
+#counting the people who go from each category between admission and discharge
+alluvial <- alluvial %>% 
+  count(Program, Admission, Discharge) %>% 
+  na.omit() 
+
+#creating id column for reshaping data with
+alluvial <- alluvial %>% 
+  mutate(id = 1:nrow(alluvial))
+
+#changing shape of data and renaming columns
+alluvial_long <- melt(alluvial, id = c("id", "n", "Program"))
+names(alluvial_long) <- c("id", "Number", "Program","Time", "Arrangement")
+
+#creating proportions 
+#step 1. total values of people at each program 
+total <- alluvial_long %>% 
+  group_by(Program, Time) %>% 
+  summarize(sum = sum(Number))
+#step 2. add totals into dataset
+alluvial_long <- alluvial_long %>% 
+  left_join(total, by = c("Program", "Time"))
+#step 3. create proportions
+alluvial_long <- alluvial_long %>% 
+  mutate(prop = Number/sum)
+
+#graph code, with program name facet added in
+ggplot(alluvial_long, aes(x=Time, stratum=Arrangement, alluvium=id, y=prop,fill=Arrangement))+ 
+  geom_flow()+ 
+  geom_stratum()+ 
+  theme_minimal()+
+  facet_wrap(~Program, labeller = label_both)+
+  theme(legend.position="bottom")+ 
+  labs(x="Time", y="Percent", title = "Living Arrangements At Admission and Discharge")+
+  scale_fill_brewer(palette = "Spectral")+
+  scale_y_continuous(labels = scales::percent)

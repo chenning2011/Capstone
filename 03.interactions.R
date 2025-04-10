@@ -162,6 +162,52 @@ interaction(RiskClientScores, "Success", "ProgramName", "Suicide")
 interaction(RiskClientScores, "Success", "ProgramName", "Homicide")
 #no one w homicide risk in two programs
 
-#program and homicide binary 
+#program and risk level 
 interaction(RiskClientScores, "Success", "ProgramName", "RiskLevel")
 #no one w homicide risk in two programs
+
+#for the poster - remove all program names 
+
+#Graph for poster
+ggplot(data = RiskClientScores)+
+  stat_summary(aes(x=ProgramName, y=Success, fill=RiskLevel), fun = "mean", geom="bar", position = "dodge")+
+  theme_minimal()+
+  labs(title = paste("Proportion of Successful Outcomes by Program and Risk Level"), x = "Program", y = "Proportion of Successful Outcomes", fill = "Risk Level")+
+  scale_fill_brewer(palette = "Set1", direction = -1)
+
+
+#basic logistic regression with just success and risk level 
+logreg <- glm(Success ~ RiskLevel + ProgramName + Race + AgeAtAdmission +
+                EmotionallyDisengaged+RecklessImpulsivity+
+                PoorJudgement + outsourcingResponsibility + Suicide + Homicide +
+                Justifying + Grandiosity +DisregardForOthers, data = RiskClientScores, family = "binomial")
+clustered <- vcovCL(logreg, cluster = ~ RiskClientScores$StudyClientId, type = "HC0")
+
+#getting coefficients with clustered standard errors 
+logreg_clustered <- coeftest(logreg, vcov = clustered)
+logreg_clustered
+#just for coefficients
+exp(logreg_clustered)
+
+#risk level high is 47.63% less likely to succeed than risk level low, regardless of other factors (z=-3.75, p=0.0001769)
+#risk level moderate is 31.01% less likely to succeed than risk level low, regardless of other factors (z=-2.96, p = 0.0031)
+
+sub<- RiskClientScores %>% 
+  filter(Program %in% c(2,3,4)) %>% 
+  dplyr::select(RiskLevel, AgeAtAdmission, Success, 38:45, Suicide, Race, Homicide, StudyClientId) 
+
+#basic logistic regression with just success and risk level, subsetting for just programs 2,3,4 (subset taken from 4.5ML code, so maybe reorganize all of these files later)
+logreg <- glm(Success ~ RiskLevel + Race + AgeAtAdmission +
+                EmotionallyDisengaged+RecklessImpulsivity+
+                PoorJudgement + outsourcingResponsibility + Suicide + Homicide +
+                Justifying + Grandiosity +DisregardForOthers, data = sub, family = "binomial")
+clustered <- vcovCL(logreg, cluster = ~ sub$StudyClientId, type = "HC0")
+
+#getting coefficients with clustered standard errors 
+logreg_clustered <- coeftest(logreg, vcov = clustered)
+logreg_clustered
+#just for coefficients
+exp(logreg_clustered)
+
+#risk level high is 47.63% less likely to succeed than risk level low, regardless of other factors (z=-3.75, p=0.0001769)
+#risk level moderate is 31.01% less likely to succeed than risk level low, regardless of other factors (z=-2.96, p = 0.0031)

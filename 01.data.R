@@ -23,9 +23,6 @@ ScoresRTData <- read_csv("Data Files/ScoresRTData.csv")
 #the form's goal is to help decide the level/needs for supervision
 ScoresCSTData <- read_excel("Data Files/ScoresCSTData.xlsx")
 
-#where people are staying, how long they've been there, and past trauma they're willing to disclose
-EpisodeTraumaData <- read_excel("Data Files/EpisodeTraumaData.xlsx")
-
 #suicide and homocide risk levels at admission for patients 
 #taken from a form - adapted from columbia suicide severity rating scale
 RiskDataRevised <- read_excel("Data Files/RiskDataRevised.xlsx")
@@ -50,11 +47,6 @@ CtpData <- read_excel("Data Files/CtpData.xlsx")
 
 #demographic information
 ClientData <- read_excel("Data Files/ClientData.xlsx")
-
-#data on incidents that they could link clients to -> might not be as helpful
-#need more information on when these incidents are occuring (is it while they're under probation?)
-#for this one, download the new wide version from teams before doing work with 
-IncidentData <- read_excel("Data Files/IncidentData.xlsx")
 
 #ASUS substance use data 
 ASUS_dimension_scores <- read_excel("Data Files/ASUS_dimension_scores.xlsx")
@@ -285,6 +277,26 @@ RiskClientScores <- RiskClientScores %>%
 #setting risk level reference level 
 RiskClientScores$RiskLevel <- factor(RiskClientScores$RiskLevel, levels = c("Low", "Moderate", "High"))
 
+#Anonymized program name variable for poster 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(Program = case_when(
+    ProgramName == "Eddy Center" ~ 1, 
+    ProgramName == "REACH (ReEntry Assisted Community Housing)" ~ 2,
+    ProgramName == "Roger Sherman House" ~ 3, 
+    ProgramName == "SIERRA Center - Work Release" ~ 4, 
+    TRUE ~ 5
+  ))
+
+#changing program name variable for readability on graphics 
+RiskClientScores <- RiskClientScores %>% 
+  mutate(ProgramName = case_when(
+    ProgramName == "Eddy Center" ~ "Eddy Center", 
+    ProgramName == "REACH (ReEntry Assisted Community Housing)" ~ "REACH",
+    ProgramName == "Roger Sherman House" ~ "Roger Sherman", 
+    ProgramName == "SIERRA Center - Work Release" ~ "SIERRA Center", 
+    TRUE ~ "The January Center"
+  ))
+
 #saving datafile for further analysis 
 save(RiskClientScores, file = "cleaned.Rdata")
 
@@ -319,5 +331,4 @@ cor_plot(CtpData)
 
 subset <- ASUS_dimension_scores[,c("GLOBAL_AOD_PSYCHOSOCIAL2", "DEFENSIVE", "MOTIVATION_TO_CHANGE", "STRENGTHS", "AOD_USE_BENEFITS", "SOCIAL_NON_CONFORMING")]
 cor_plot(subset)
-#use these variables from ASUS and all the CTP variables
-#work on creating an outline for the paper and send it to jen 
+

@@ -164,7 +164,9 @@ log3 <- glm(Success ~ InabilityToCope + EmotionallyDisengaged+RecklessImpulsivit
               PoorJudgement + outsourcingResponsibility + Justifying + Grandiosity + DisregardForOthers, data = RiskClientScores, 
             family = "binomial")
 summary(log3)
-#justifying and disregardforothers are sig. 
+#justifying and disregardforothers are sig.
+
+#outcome and risk level, by itself 
 
 ###########basic logistic regression with all sig. vars ###################
 logregfull <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName, data = RiskClientScores, family = "binomial" )
@@ -180,8 +182,10 @@ exp(logregfull$coefficients)
 #SIERRA is sig. when compared to Eddy Center (z = -3.872, p = 0.000108)
 #form is not sig. 
 
-logregctp <- glm(Success ~ LengthOfStay + Form + RiskLevel + ProgramName + EmotionallyDisengaged+RecklessImpulsivity+
-                   PoorJudgement + outsourcingResponsibility + Justifying + Grandiosity + DisregardForOthers, 
+logregctp <- glm(Success ~ RiskLevel + Race + AgeAtAdmission +
+                   ProgramName + EmotionallyDisengaged+RecklessImpulsivity+
+                   PoorJudgement + outsourcingResponsibility + 
+                   Justifying + Grandiosity +DisregardForOthers, 
                  data = RiskClientScores, family = "binomial" )
 summary(logregctp)  
 exp(logregctp$coefficients) 

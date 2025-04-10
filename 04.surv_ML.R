@@ -23,7 +23,29 @@ ggsurvplot(surv, fun = "cloglog")
 
 #adding more variables
 surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
-ggsurvplot(surv.program)$plot + geom_vline(xintercept=120)+theme(legend.position = "right")+guides(color = guide_legend(nrow=5))
+ggsurvplot(surv.program)$plot + geom_vline(xintercept=120)+theme(legend.position = "right")+guides(color = guide_legend(nrow=5))+labs(caption = "All programs, except program 2, have a contracted length of 120 days.")+theme(plot.caption = element_text(size=8))
+
+#graphing code for poster for wesfest
+surv.programanon <-survfit(Surv(LengthOfStay, Success)~Program+cluster(StudyClientId), data = RiskClientScores)
+ggsurvplot(surv.programanon)$plot + 
+  geom_vline(xintercept=120)+theme(legend.position = "right")+
+  guides(color = guide_legend(nrow=5))+
+  labs(caption = "All programs, except program 5, have a contracted length of 120 days.")+
+  theme(plot.caption = element_text(size=8))+
+  ggtitle("Time Until Successful Outcome, Stratified by Program")+
+  scale_color_brewer(palette="Set1")
+
+survdiff(Surv(LengthOfStay, Success)~Program + cluster(StudyClientId), data = RiskClientScores, rho = 0)
+
+#regular graph code 
+surv.program <-survfit(Surv(LengthOfStay, Success)~ProgramName+cluster(StudyClientId), data = RiskClientScores)
+ggsurvplot(surv.program)$plot + 
+  geom_vline(xintercept=120)+theme(legend.position = "right")+
+  guides(color = guide_legend(nrow=5))+
+  labs(caption = "All programs, except The January Center, have a contracted length of 120 days.")+
+  theme(plot.caption = element_text(size=8))+
+  ggtitle("Time Until Successful Outcome, Stratified by Program")+
+  scale_color_brewer(palette="Set1")
 
 #adding all variables
 surv.cox <- coxph(Surv(LengthOfStay, Success)~RiskLevel+ProgramName+Form+Suicide+cluster(StudyClientId), data = RiskClientScores)
@@ -41,9 +63,9 @@ cox.zph(surv.cox)
 #stratifying based on type of program 
 s <- RiskClientScores[RiskClientScores$ProgramName == "Roger Sherman House"|
                            RiskClientScores$ProgramName == "SIERRA Center - Work Release"|
-                           RiskClientScores$ProgramName == "Eddy Center",]
+                           RiskClientScores$ProgramName == "REACH (ReEntry Assisted Community Housing)",]
 subset2 <- RiskClientScores[RiskClientScores$ProgramName == "The January Center"|
-                            RiskClientScores$ProgramName == "REACH (ReEntry Assisted Community Housing)",]
+                            RiskClientScores$ProgramName == "Eddy Center",]
 
 #less intense programs only 
 surv.subset <- coxph(Surv(LengthOfStay, Success)~RiskLevel, data = s)
@@ -80,7 +102,7 @@ df_plot(RiskClientScores)
 
 #taking subset just with variables of interest for this 
 sub<- RiskClientScores %>% 
-  select(RiskLevel, ProgramName, AgeAtAdmission, Success, 
+  select(RiskLevel, Program, AgeAtAdmission, Success, 
          38:45, Suicide, Race) %>% 
   na.omit()
 #kept race as it is the demographic variable with the least amount of missing data 
@@ -89,7 +111,8 @@ sub<- RiskClientScores %>%
 #setting up success and making all variables into factors
 sub$Success <- factor(sub$Success, levels = c(0, 1), labels = c("Failure", "Success"))
 sub <- sub %>%
-  mutate(across(where(is.character), as.factor))
+  mutate(across(where(is.character), as.factor)) %>% 
+  mutate(Program = factor(Program))
 
 #cross-validation function for all machine learning models
 control <- trainControl(method="cv", 
@@ -118,7 +141,7 @@ df <- df %>%
   mutate(type = case_when(
     name %in% c("RiskLevelModerate", "RiskLevelHigh") ~ "Risk Level",
     name %in% c("AgeAtAdmission", "RaceOther", "RaceCaucasian or White") ~ "Demographic",
-    str_detect(name, "ProgramName") ~ "Program Name", 
+    str_detect(name, "Program") ~ "Program", 
     TRUE ~ "Criminal Thinking Profile"
   ))
 
@@ -177,7 +200,7 @@ df <- df %>%
   mutate(type = case_when(
     name %in% c("RiskLevelModerate", "RiskLevelHigh") ~ "Risk Level",
     name %in% c("AgeAtAdmission", "RaceOther", "RaceCaucasian or White") ~ "Demographic",
-    str_detect(name, "ProgramName") ~ "Program Name",
+    str_detect(name, "Program") ~ "Program",
     name == "SuicideRisk" ~ "Suicide Risk", 
     TRUE ~ "Criminal Thinking Profile"
   ))
@@ -192,7 +215,7 @@ df %>%
        y = "Importance", fill = "Variable Type", 
        caption = "")+
   theme_minimal()+
-  scale_fill_brewer(palette ="Set2", direction = -1)
+  scale_fill_brewer(palette ="Set1", direction = -1)
 
 #---------------------------------------------------------
 # stepwise
@@ -222,7 +245,7 @@ imp <- imp %>%
   mutate(type = case_when(
     name %in% c("RiskLevelModerate", "RiskLevelHigh") ~ "Risk Level",
     name %in% c("AgeAtAdmission", "RaceOther", "RaceCaucasian or White") ~ "Demographic",
-    str_detect(name, "ProgramName") ~ "Program Name", 
+    str_detect(name, "Program") ~ "Program", 
     TRUE ~ "Criminal Thinking Profile"
   ))
 
@@ -258,7 +281,7 @@ imp <- imp %>%
   mutate(type = case_when(
     var %in% c("RiskLevelModerate", "RiskLevelHigh") ~ "Risk Level",
     var %in% c("AgeAtAdmission", "RaceOther", "RaceCaucasian or White") ~ "Demographic",
-    str_detect(var, "ProgramName") ~ "Program Name", 
+    str_detect(var, "Program") ~ "Program", 
     var=="SuicideRisk" ~ "Suicide Risk", 
     TRUE ~ "Criminal Thinking Profile"
   ))
@@ -326,8 +349,9 @@ df$name <- rownames(df)
 df <- df %>% 
   mutate(type = case_when(
     name %in% c("RiskLevelModerate", "RiskLevelHigh") ~ "Risk Level",
-    name %in% c("AgeAtAdmission", "`RaceCaucasian or White`", "RaceOther") ~ "Demographic",
-    str_detect(name, "ProgramName") ~ "Program Name", 
+    name %in% c("AgeAtAdmission", "`RaceCaucasian or White`", 
+                "RaceOther") ~ "Demographic",
+    str_detect(name, "Program") ~ "Program", 
     name=="SuicideRisk" ~ "Suicide Risk", 
     TRUE ~ "Criminal Thinking Profile"
   ))
@@ -342,7 +366,7 @@ df %>%
        y = "Importance", fill = "Variable Type", 
        caption = "")+
   theme_minimal()+
-  scale_fill_brewer(palette ="Set2", direction = -1)
+  scale_fill_brewer(palette ="Set1", direction = -1)
 
 #most important variables are program, risk level, 
 #then jusitfying, grandiosity, suicide risk, race white
@@ -377,6 +401,10 @@ dotplot(results,
 #this is especially true for participants who are deemed high risk 
 #these participants need more support 
 
-#need to figure out if i use the lasso variables or just all of the variables in the model? 
-#where do i go from here? 
+#from here, can just drill down into REACH and other work release programs
+#could even combine REACH w/other programs if they're similar 
+#other programs are roger sherman and sierra center - can run same models on subset w/just these three programs
+# need to figure out why they're struggling so much 
+#make a visualization that shows the magnitude of each coefficient instead of just 
+#variable importance (i.e. which ones are positive and which ones are negative)
 
