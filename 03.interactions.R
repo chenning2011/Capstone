@@ -198,6 +198,7 @@ data %>%
   mutate(coef = ifelse(coef < 1, (1-coef)*-1, coef),
          color = ifelse(coef < 0, "negative", "positive")) -> data
 
+#plot of logistic regerssion coefficients w/clustered standard errors and all vars
 data %>% 
   filter(!(var %in% c("RecklessImpulsivity", "AgeAtAdmission"))) %>% 
   ggplot()+
@@ -205,8 +206,8 @@ data %>%
   coord_flip()+
   theme_minimal()+
   theme(legend.position = "none")+
-  labs(x="Variable", y = "Coefficient (Odds Ratio)", caption = "Age and Reckless Impulsivity were removed for readability (OR < 0.01)", title = "Log Odds by Variable from Logistic Regression with Clustered SE")+
-  scale_fill_manual(values = c("firebrick", "deepskyblue4"))
+  labs(x="Variable", y = "Coefficient (Odds Ratio)", caption = "Age and Reckless Impulsivity were removed for readability (OR < 0.01)", title = "Odds Ratios by Variable from Logistic Regression with Clustered SE")+
+  scale_fill_brewer(palette = "Set1")
 
 #risk level high is 47.63% less likely to succeed than risk level low, regardless of other factors (z=-3.75, p=0.0001769)
 #risk level moderate is 31.01% less likely to succeed than risk level low, regardless of other factors (z=-2.96, p = 0.0031)
@@ -227,6 +228,25 @@ logreg_clustered <- coeftest(logreg, vcov = clustered)
 logreg_clustered
 #just for coefficients
 exp(logreg_clustered)
+
+#creating a dataframe so i can plot these results 
+data <- data.frame(exp(logreg_clustered)[,1])
+data$var <- rownames(data)
+data %>% 
+  filter(var !="(Intercept)") %>% 
+  rename(coef = exp.logreg_clustered....1.) %>% 
+  mutate(coef = ifelse(coef < 1, (1-coef)*-1, coef),
+         color = ifelse(coef < 0, "negative", "positive")) -> data
+
+#plot of logistic regerssion coefficients w/clustered standard errors and all vars
+data %>% 
+  ggplot()+
+  geom_col(aes(x=reorder(var, coef), y=coef, fill = color))+
+  coord_flip()+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  labs(x="Variable", y = "Coefficient (Odds Ratio)", title = "Odds Ratios by Variable from Logistic Regression with Clustered SE \nfor Low-Supervision Programs")+
+  scale_fill_brewer(palette = "Set1")
 
 #risk level high is 47.63% less likely to succeed than risk level low, regardless of other factors (z=-3.75, p=0.0001769)
 #risk level moderate is 31.01% less likely to succeed than risk level low, regardless of other factors (z=-2.96, p = 0.0031)

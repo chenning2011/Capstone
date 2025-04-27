@@ -102,7 +102,7 @@ df_plot(RiskClientScores)
 
 #taking subset just with variables of interest for this 
 sub<- RiskClientScores %>% 
-  select(RiskLevel, Program, AgeAtAdmission, Success, 
+  select(RiskLevel, ProgramName, AgeAtAdmission, Success, 
          38:45, Suicide, Race) %>% 
   na.omit()
 #kept race as it is the demographic variable with the least amount of missing data 
@@ -112,7 +112,7 @@ sub<- RiskClientScores %>%
 sub$Success <- factor(sub$Success, levels = c(0, 1), labels = c("Failure", "Success"))
 sub <- sub %>%
   mutate(across(where(is.character), as.factor)) %>% 
-  mutate(Program = factor(Program))
+  mutate(ProgramName = factor(ProgramName))
 
 #cross-validation function for all machine learning models
 control <- trainControl(method="cv", 
@@ -215,7 +215,7 @@ df %>%
        y = "Importance", fill = "Variable Type", 
        caption = "")+
   theme_minimal()+
-  scale_fill_brewer(palette ="Set1", direction = -1)
+  scale_fill_brewer(palette ="Dark2", direction = -1)
 
 #---------------------------------------------------------
 # stepwise
@@ -379,9 +379,9 @@ df %>%
 ## compare models
 results <- resamples(list(forest = fit.forest,
                           lasso = model.lasso, 
-                          stepwise = model.stepAIC,
-                          gbm = model.gbm, 
-                          glm = model.glm))
+                          bi_stepwise = model.stepAIC,
+                          gradient_boosted = model.gbm, 
+                          logistic = model.glm))
 
 #numeric comparison between all the models 
 summary(results)
