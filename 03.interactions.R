@@ -190,24 +190,33 @@ logreg_clustered
 exp(logreg_clustered)
 
 #creating a dataframe so i can plot these results 
-data <- data.frame(exp(logreg_clustered)[,1])
+data <- data.frame(logreg_clustered[,1])
 data$var <- rownames(data)
 data %>% 
   filter(var !="(Intercept)") %>% 
-  rename(coef = exp.logreg_clustered....1.) %>% 
-  mutate(coef = ifelse(coef < 1, (1-coef)*-1, coef),
-         color = ifelse(coef < 0, "negative", "positive")) -> data
+  rename(coef = logreg_clustered...1.) %>% 
+  mutate(color = ifelse(coef < 0, "negative", "positive")) -> data
+
+data %>% 
+  mutate(OR = exp(coef), 
+         pvalue = logreg_clustered[2:19,4], 
+         sig = ifelse(pvalue < 0.05, "sig", "not sig")) -> data
 
 #plot of logistic regerssion coefficients w/clustered standard errors and all vars
 data %>% 
-  filter(!(var %in% c("RecklessImpulsivity", "AgeAtAdmission"))) %>% 
+  filter(!(var %in% c("Grandiosity", "outsourcingResponsibility"))) %>% 
   ggplot()+
   geom_col(aes(x=reorder(var, coef), y=coef, fill = color))+
   coord_flip()+
   theme_minimal()+
+  geom_text(data = data[data$sig=="sig",], 
+            aes(x=reorder(var, coef), y=coef, label = round(OR,2)),
+            fontface="bold",
+            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.1, -0.1))+
   theme(legend.position = "none")+
-  labs(x="Variable", y = "Coefficient (Odds Ratio)", caption = "Age and Reckless Impulsivity were removed for readability (OR < 0.01)", title = "Odds Ratios by Variable from Logistic Regression with Clustered SE")+
-  scale_fill_brewer(palette = "Set1")
+  labs(x="Variable", y = "Coefficient (Log Odds)", caption = "Grandiosity and Outsourcing Responsibility were removed for readability.\nOdds ratios are displayed for statistically significant variables", title = "Log Odds by Variable from Logistic Regression with Clustered SE")+
+  scale_fill_brewer(palette = "Set1")+
+  scale_y_continuous(breaks = c(-1.5, -1, -0.5, 0, 0.5, 1, 1.5))
 
 #risk level high is 47.63% less likely to succeed than risk level low, regardless of other factors (z=-3.75, p=0.0001769)
 #risk level moderate is 31.01% less likely to succeed than risk level low, regardless of other factors (z=-2.96, p = 0.0031)
@@ -230,23 +239,75 @@ logreg_clustered
 exp(logreg_clustered)
 
 #creating a dataframe so i can plot these results 
-data <- data.frame(exp(logreg_clustered)[,1])
+data <- data.frame(logreg_clustered[,1])
 data$var <- rownames(data)
 data %>% 
   filter(var !="(Intercept)") %>% 
-  rename(coef = exp.logreg_clustered....1.) %>% 
-  mutate(coef = ifelse(coef < 1, (1-coef)*-1, coef),
-         color = ifelse(coef < 0, "negative", "positive")) -> data
+  rename(coef = logreg_clustered...1.) %>% 
+  mutate(color = ifelse(coef < 0, "negative", "positive")) -> data
+
+data %>% 
+  mutate(OR = exp(coef), 
+         pvalue = logreg_clustered[2:15,4], 
+         sig = ifelse(pvalue < 0.05, "sig", "not sig")) -> data
 
 #plot of logistic regerssion coefficients w/clustered standard errors and all vars
 data %>% 
+  filter(!(var %in% c("Grandiosity", "outsourcingResponsibility"))) %>% 
   ggplot()+
   geom_col(aes(x=reorder(var, coef), y=coef, fill = color))+
   coord_flip()+
   theme_minimal()+
+  geom_text(data = data[data$sig=="sig",], 
+            aes(x=reorder(var, coef), y=coef, label = round(OR,2)),
+            fontface="bold",
+            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.05, -0.05))+
   theme(legend.position = "none")+
-  labs(x="Variable", y = "Coefficient (Odds Ratio)", title = "Odds Ratios by Variable from Logistic Regression with Clustered SE \nfor Low-Supervision Programs")+
-  scale_fill_brewer(palette = "Set1")
+  labs(x="Variable", y = "Coefficient (Log Odds)", caption = "Odds ratios are displayed for statistically significant variables", title = "Log Odds by Variable from Logistic Regression with Clustered SE \nfor Low-Supervision Programs")+
+  scale_fill_brewer(palette = "Set1")+
+  scale_y_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5, 0.75))
 
 #risk level high is 47.63% less likely to succeed than risk level low, regardless of other factors (z=-3.75, p=0.0001769)
 #risk level moderate is 31.01% less likely to succeed than risk level low, regardless of other factors (z=-2.96, p = 0.0031)
+
+sub<- RiskClientScores %>% 
+  filter(Program %in% c(1,5)) %>% 
+  dplyr::select(RiskLevel, AgeAtAdmission, Success, 38:45, Suicide, Race, Homicide, StudyClientId) 
+
+#basic logistic regression with just success and risk level, subsetting for just programs 2,3,4 (subset taken from 4.5ML code, so maybe reorganize all of these files later)
+logreg <- glm(Success ~ RiskLevel + Race + AgeAtAdmission +
+                EmotionallyDisengaged+RecklessImpulsivity+
+                PoorJudgement + outsourcingResponsibility + Suicide +
+                Justifying + Grandiosity +DisregardForOthers, data = sub, family = "binomial")
+clustered <- vcovCL(logreg, cluster = ~ sub$StudyClientId, type = "HC0")
+
+#getting coefficients with clustered standard errors 
+logreg_clustered <- coeftest(logreg, vcov = clustered)
+logreg_clustered
+#just for coefficients
+exp(logreg_clustered)
+
+data <- data.frame(logreg_clustered[,1])
+data$var <- rownames(data)
+data %>% 
+  filter(var !="(Intercept)") %>% 
+  rename(coef = logreg_clustered...1.) %>% 
+  mutate(color = ifelse(coef < 0, "negative", "positive")) -> data
+
+data %>% 
+  mutate(OR = exp(coef), 
+         pvalue = logreg_clustered[2:14,4], 
+         sig = ifelse(pvalue < 0.05, "sig", "not sig")) -> data
+
+#plot of logistic regerssion coefficients w/clustered standard errors and all vars
+ggplot(data)+
+  geom_col(aes(x=reorder(var, coef), y=coef, fill = color))+
+  coord_flip()+
+  theme_minimal()+
+  geom_text(data = data[data$sig=="sig",], 
+            aes(x=reorder(var, coef), y=coef, label = round(OR,2)),
+            fontface="bold",
+            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.05, -0.05))+
+  theme(legend.position = "none")+
+  labs(x="Variable", y = "Coefficient (Log Odds)", caption = "Odds ratios are displayed for statistically significant variables", title = "Log Odds by Variable from Logistic Regression with Clustered SE \nfor High-Supervision Programs")+
+  scale_fill_brewer(palette = "Set1")
