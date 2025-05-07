@@ -210,11 +210,11 @@ data %>%
   coord_flip()+
   theme_minimal()+
   geom_text(data = data[data$sig=="sig",], 
-            aes(x=reorder(var, coef), y=coef, label = round(OR,2)),
+            aes(x=reorder(var, coef), y=coef, label = paste("OR:", round(OR,2))),
             fontface="bold",
-            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.1, -0.1))+
+            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.2, -0.2))+
   theme(legend.position = "none")+
-  labs(x="Variable", y = "Coefficient (Log Odds)", caption = "Grandiosity and Outsourcing Responsibility were removed for readability.\nOdds ratios are displayed for statistically significant variables", title = "Log Odds by Variable from Logistic Regression with Clustered SE")+
+  labs(x="Variable", y = "Coefficient (Logit)", caption = "Grandiosity and Outsourcing Responsibility were removed for readability.\nOdds ratios are displayed for statistically significant variables", title = "Logit by Variable from Logistic Regression with Clustered SE")+
   scale_fill_brewer(palette = "Set1")+
   scale_y_continuous(breaks = c(-1.5, -1, -0.5, 0, 0.5, 1, 1.5))
 
@@ -259,11 +259,11 @@ data %>%
   coord_flip()+
   theme_minimal()+
   geom_text(data = data[data$sig=="sig",], 
-            aes(x=reorder(var, coef), y=coef, label = round(OR,2)),
+            aes(x=reorder(var, coef), y=coef, label = paste("OR:", round(OR,2))),
             fontface="bold",
-            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.05, -0.05))+
+            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.07, -0.07))+
   theme(legend.position = "none")+
-  labs(x="Variable", y = "Coefficient (Log Odds)", caption = "Odds ratios are displayed for statistically significant variables", title = "Log Odds by Variable from Logistic Regression with Clustered SE \nfor Low-Supervision Programs")+
+  labs(x="Variable", y = "Coefficient (Logit)", caption = "Odds ratios are displayed for statistically significant variables", title = "Logit by Variable from Logistic Regression with Clustered SE \nfor Low-Supervision Programs")+
   scale_fill_brewer(palette = "Set1")+
   scale_y_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5, 0.75))
 
@@ -305,9 +305,9 @@ ggplot(data)+
   coord_flip()+
   theme_minimal()+
   geom_text(data = data[data$sig=="sig",], 
-            aes(x=reorder(var, coef), y=coef, label = round(OR,2)),
+            aes(x=reorder(var, coef), y=coef, label = paste("OR:", round(OR,2))),
             fontface="bold",
-            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.05, -0.05))+
+            nudge_y = ifelse(data[data$sig=="sig",]$coef > 0, 0.05, -0.09))+
   theme(legend.position = "none")+
-  labs(x="Variable", y = "Coefficient (Log Odds)", caption = "Odds ratios are displayed for statistically significant variables", title = "Log Odds by Variable from Logistic Regression with Clustered SE \nfor High-Supervision Programs")+
+  labs(x="Variable", y = "Coefficient (Logit)", caption = "Odds ratios are displayed for statistically significant variables", title = "Logit by Variable from Logistic Regression with Clustered SE \nfor High-Supervision Programs")+
   scale_fill_brewer(palette = "Set1")

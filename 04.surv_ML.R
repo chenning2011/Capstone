@@ -61,9 +61,9 @@ ggsurvplot(surv.form, fun = "cloglog")
 cox.zph(surv.cox)
 
 #stratifying based on type of program 
-s <- RiskClientScores[RiskClientScores$ProgramName == "Roger Sherman House"|
-                           RiskClientScores$ProgramName == "SIERRA Center - Work Release"|
-                           RiskClientScores$ProgramName == "REACH (ReEntry Assisted Community Housing)",]
+s <- RiskClientScores[RiskClientScores$ProgramName == "Roger Sherman"|
+                           RiskClientScores$ProgramName == "SIERRA Center"|
+                           RiskClientScores$ProgramName == "REACH",]
 subset2 <- RiskClientScores[RiskClientScores$ProgramName == "The January Center"|
                             RiskClientScores$ProgramName == "Eddy Center",]
 
@@ -105,6 +105,10 @@ sub<- RiskClientScores %>%
   select(RiskLevel, ProgramName, AgeAtAdmission, Success, 
          38:45, Suicide, Race) %>% 
   na.omit()
+
+sub2 <- RiskClientScores %>% 
+  select(RiskLevel, ProgramName, AgeAtAdmission, Success, 
+         38:45, Suicide, Race)
 #kept race as it is the demographic variable with the least amount of missing data 
 #other demographic variables had too much missing data to be included in this 
 
@@ -113,6 +117,12 @@ sub$Success <- factor(sub$Success, levels = c(0, 1), labels = c("Failure", "Succ
 sub <- sub %>%
   mutate(across(where(is.character), as.factor)) %>% 
   mutate(ProgramName = factor(ProgramName))
+
+set.seed(1234)
+index <- createDataPartition(sub$Success, p=.8,
+                             list=FALSE)
+train <- sub[index,]
+test <- sub[-index, ]
 
 #cross-validation function for all machine learning models
 control <- trainControl(method="cv", 
@@ -123,7 +133,7 @@ control <- trainControl(method="cv",
 #running random forest 
 set.seed(1234)
 fit.forest <- train(Success ~ ., 
-                    data=sub, 
+                    data=train, 
                     method="rf",
                     metric="ROC",
                     ntree=500,
@@ -170,7 +180,7 @@ lambda <- 10^seq(-3, 3, length=100)
 #building model
 set.seed(1234)
 model.lasso <- train(
-  Success ~., data = sub, 
+  Success ~., data = train, 
   method = "glmnet",
   metric = "ROC",
   trControl = control,
@@ -178,7 +188,8 @@ model.lasso <- train(
   family = "binomial"
 )
 
-model.lasso$finalModel
+
+model.lasso$bestTune$lambda
 
 #looking at the variables that lasso identified
 x <- coef(model.lasso$finalModel, model.lasso$bestTune$lambda)
@@ -195,6 +206,10 @@ imp <- varImp(model.lasso)
 df <- imp$importance
 df$name <- rownames(df)
 
+#getting relative influence instead of importance 
+df <- df %>% 
+  mutate(rel = Overall/sum(Overall)*100)
+
 #creating categories for the variables 
 df <- df %>% 
   mutate(type = case_when(
@@ -209,20 +224,21 @@ df <- df %>%
 df %>% 
   filter(Overall > 0) %>% 
   ggplot()+
-  geom_col(aes(x=reorder(name, Overall), y=Overall, fill=type))+
+  geom_col(aes(x=reorder(name, rel), y=rel, fill=type))+
   coord_flip()+
-  labs(x="", title = "Relative Importance of Variables in Lasso Regression Model", 
-       y = "Importance", fill = "Variable Type", 
+  labs(x="", title = "Relative Influence of Variables in Lasso Regression Model", 
+       y = "Relative Influence", fill = "Variable Type", 
        caption = "")+
   theme_minimal()+
-  scale_fill_brewer(palette ="Dark2", direction = -1)
+  scale_fill_brewer(palette ="Dark2", direction = -1)+
+  scale_y_continuous(breaks = seq(0,30, by = 5))
 
 #---------------------------------------------------------
 # stepwise
 #---------------------------------------------------------
 
 #running multidirectional stepwise model 
-model.stepAIC <- train(Success ~ ., data=sub,
+model.stepAIC <- train(Success ~ ., data=train,
                        method="glmStepAIC",
                        direction = "both",
                        trControl = control, 
@@ -266,7 +282,7 @@ ggplot(imp)+
 #gradient boosting model 
 set.seed(1234)
 model.gbm <- train(Success~., 
-                   data = sub, 
+                   data = train, 
                    method = "gbm", 
                    tuneLength=3,
                    trControl = control,
@@ -321,7 +337,7 @@ imp %>%
 #logistic regression 
 set.seed(1234)
 model.glm <- train(Success~., 
-                   data = sub, 
+                   data = train, 
                    method = "glm", 
                    tuneLength=3,
                    trControl = control,
@@ -366,7 +382,7 @@ df %>%
        y = "Importance", fill = "Variable Type", 
        caption = "")+
   theme_minimal()+
-  scale_fill_brewer(palette ="Set1", direction = -1)
+  scale_fill_brewer(palette ="Dark2", direction = -1)
 
 #most important variables are program, risk level, 
 #then jusitfying, grandiosity, suicide risk, race white
@@ -391,6 +407,10 @@ bwplot(results,
        scales =list(x=list(relation = "free")))
 dotplot(results,
         scales =list(x=list(relation = "free")))
+
+#testing best model on test dataset now 
+test$pred <- as.factor(predict(model.lasso, test))
+confusionMatrix(test$pred, test$Success, positive = "Success")
 
 #need to decide which is best based on all the numbers 
 #lasso is only slightly better than logistic regression in terms of ROC 

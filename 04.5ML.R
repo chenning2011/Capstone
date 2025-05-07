@@ -16,6 +16,10 @@ sub<- RiskClientScores %>%
   filter(Program %in% c(2,3,4)) %>% 
   dplyr::select(RiskLevel, AgeAtAdmission, Success, 38:45, Suicide, Race) %>% 
   na.omit()
+
+sub2 <- RiskClientScores %>% 
+  filter(Program %in% c(2,3,4)) %>% 
+  dplyr::select(RiskLevel, AgeAtAdmission, Success, 38:45, Suicide, Race)
 #kept race as it is the demographic variable with the least amount of missing data 
 #other demographic variables had too much missing data to be included in this 
 
@@ -189,7 +193,6 @@ model.gbm <- train(Success~.,
 model.gbm
 
 
-
 #relative importance of all the variables
 imp <- summary(model.gbm$finalModel)
 
@@ -209,8 +212,8 @@ imp %>%
   ggplot()+
   geom_col(aes(x=reorder(var, rel.inf), y=rel.inf, fill=type))+
   coord_flip()+
-  labs(x="", title = "Relative Importance of Variables in Gradient Boosted Model", 
-       y = "Importance", fill = "Variable Type", 
+  labs(x="", title = "Relative Influence of Variables in Gradient Boosted Model", 
+       y = "Relative Influence", fill = "Variable Type", 
        caption = "")+
   theme_minimal()+
   scale_fill_brewer(palette = "Dark2", direction = -1)
@@ -295,18 +298,6 @@ dotplot(results,
 test$pred <- as.factor(predict(model.gbm, test))
 confusionMatrix(test$pred, test$Success, positive = "Successful")
 
-test$pred <- as.factor(predict(model.glm, test))
-confusionMatrix(test$pred, test$Success, positive = "Successful")
-
-test$pred <- as.factor(predict(model.stepAIC, test))
-confusionMatrix(test$pred, test$Success, positive = "Successful")
-
-test$pred <- as.factor(predict(model.lasso, test))
-confusionMatrix(test$pred, test$Success, positive = "Successful")
-
-test$pred <- as.factor(predict(fit.forest, test))
-confusionMatrix(test$pred, test$Success, positive = "Successful")
-
 #trying to make my own graph
 viz <- results$values
 
@@ -314,15 +305,105 @@ viz <- results$values
 viz <- pivot_longer(viz, cols = 2:16)
 
 #splitting into two columns 
-viz <- separate_wider_delim(data = viz, cols = name, delim = "~", names = c("type", "sens"))
+viz <- separate_wider_delim(data = viz, cols = name, 
+                            delim = "~", names = c("type", "sens"))
 
 #trying boxplot 
 ggplot(viz, aes(x=reorder(type, value)))+
   geom_boxplot(aes(y=value))+
-  stat_summary(aes(y=value), fun= "mean", geom = "point", color = "navy")+
+  stat_summary(aes(y=value), fun= "median", geom = "point", color = "navy")+
   facet_grid(~sens)+
   coord_flip()+
   theme_bw()
+
+
+
+library(pdp)
+
+#finding directions for graident boosted model for the coefficients as best as i possibly can
+#these are partial dependence plots, one for each independent variable
+library(patchwork)
+
+#categorical vars
+b <- partial(model.gbm, pred.var = "RiskLevel", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Risk Level of Recidivism")+geom_hline(yintercept=0, linetype = "dashed")
+c <- partial(model.gbm, pred.var = "Race", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Race")+geom_hline(yintercept=0, linetype = "dashed")+ 
+  scale_x_discrete(labels =c("African American or Black"="Black",
+                             "Caucasian or White"="White",
+                             "Other"= "Other"))
+
+#quantitative vars
+a <- partial(model.gbm, pred.var = "AgeAtAdmission", train = train) %>%
+  autoplot()+ theme_bw() + labs(x="", y="", title = "Age at Admission")+geom_hline(yintercept=0, linetype = "dashed")
+d <- partial(model.gbm, pred.var = "Grandiosity", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Grandiosity")+geom_hline(yintercept=0, linetype = "dashed")
+e <- partial(model.gbm, pred.var = "Justifying", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Justifying")+geom_hline(yintercept=0, linetype = "dashed")
+f <- partial(model.gbm, pred.var = "RecklessImpulsivity", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Reckless Impulsivity")+geom_hline(yintercept=0, linetype = "dashed")
+g <- partial(model.gbm, pred.var = "EmotionallyDisengaged", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Emotionally Disengaged")+geom_hline(yintercept=0, linetype = "dashed")
+h <- partial(model.gbm, pred.var = "DisregardForOthers", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Disregard For Others")+geom_hline(yintercept=0, linetype = "dashed")
+i <- partial(model.gbm, pred.var = "InabilityToCope", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Inability To Cope")+geom_hline(yintercept=0, linetype = "dashed")
+j <- partial(model.gbm, pred.var = "outsourcingResponsibility", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Outsourcing Responsibility")+geom_hline(yintercept=0, linetype = "dashed")
+k <- partial(model.gbm, pred.var = "PoorJudgement", train = train) %>% 
+  autoplot()+ theme_bw() + labs(y="", x = "", title = "Poor Judgement")+geom_hline(yintercept=0, linetype = "dashed")
+l <- ggplot() +
+  theme_void() +
+  geom_text(aes(x = 10, y = 0.1, label = "Dashed line represents 0 effect"),
+            size = 4, color = "black")
+
+library(cowplot)
+
+#putting together all patchwork plots
+main_plot <- (b + c + a) / 
+  (d + e + f) / 
+  (g + h + i) / 
+  (j + k + l) +
+  plot_annotation(
+    title = "Partial Dependence Plots for Gradient Boosted Model",
+    theme = theme(plot.title = element_text(size = 16, hjust = 0.5))
+  )
+
+#using cowplot to add a shared y-axis label to the patchwork graphs
+final_plot <- ggdraw(main_plot) +
+  draw_label("Average Marginal Effect", x = 0.01, angle = 90, vjust = 1
+             , size = 12)
+
+final_plot
+
+  
+#comment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #---------------------------------------------------------
 # looking just at factors that influence success for REACH specifically
